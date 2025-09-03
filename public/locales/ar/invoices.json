@@ -1,0 +1,42 @@
+{
+  "headers": {
+    "number": "رقم الفاتورة",
+    "client": "العميل",
+    "issueDate": "تاريخ الإصدار",
+    "status": "الحالة",
+    "total": "المجموع",
+    "actions": "الإجراءات"
+  },
+  "view": {
+    "back": "العودة",
+    "sendEmail": "إرسال بريد",
+    "downloadPdf": "تنزيل PDF",
+    "loading": "جارٍ تحميل الفاتورة..."
+  },
+  "edit": {
+    "status": "الحالة",
+    "title": "تعديل الفاتورة",
+    "fields": {
+      "client": "العميل",
+      "project": "المشروع",
+      "issueDate": "تاريخ الإصدار",
+      "dueDate": "تاريخ الاستحقاق",
+      "language": "اللغة",
+      "currency": "العملة",
+      "discount": "الخصم",
+      "tax": "الضريبة",
+      "items": "البنود",
+      "description": "الوصف",
+      "quantity": "الكمية",
+      "unitPrice": "سعر الوحدة",
+      "total": "المجموع"
+    },
+    "selectClient": "اختر العميل",
+    "selectProject": "اختر المشروع",
+    "addItem": "إضافة بند",
+    "subtotal": "الإجمالي الفرعي",
+    "discount": "الخصم",
+    "tax": "الضريبة",
+    "total": "الإجمالي"
+  }
+}

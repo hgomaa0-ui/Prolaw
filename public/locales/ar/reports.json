@@ -1,0 +1,24 @@
+{
+  "title": "تقرير التكاليف",
+  "headers": {
+    "project": "المشروع",
+    "lawyer": "المحامي",
+    "hours": "الساعات",
+    "rate": "الأجر",
+    "total": "الإجمالي",
+    "ready": "جاهز"
+  },
+  "buttons": {
+    "applyFilters": "تطبيق الفلاتر",
+    "reset": "إعادة ضبط",
+    "exportCSV": "تصدير CSV",
+    "exportPDF": "تصدير PDF",
+    "generateInvoice": "إنشاء فاتورة",
+    "viewInvoice": "عرض الفاتورة"
+  },
+  "filters": {
+    "allClients": "جميع العملاء",
+    "allProjects": "جميع المشاريع",
+    "allLawyers": "جميع المحامين"
+  }
+}

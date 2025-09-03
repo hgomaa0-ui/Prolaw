@@ -1,0 +1,41 @@
+{
+  "invoices": {
+    "headers": {
+      "number": "Invoice #",
+      "client": "Client",
+      "issueDate": "Issue Date",
+      "status": "Status",
+      "total": "Total",
+      "actions": "Actions"
+    },
+    "edit": {
+      "title": "Edit Invoice",
+      "fields": {
+        "client": "Client",
+        "project": "Project",
+        "issueDate": "Issue Date",
+        "dueDate": "Due Date",
+        "language": "Language",
+        "currency": "Currency",
+        "discount": "Discount",
+        "tax": "Tax",
+        "items": "Items",
+        "description": "Description",
+        "quantity": "Quantity",
+        "unitPrice": "Unit Price",
+        "total": "Total"
+      },
+      "selectClient": "Select Client",
+      "selectProject": "Select Project",
+      "addItem": "Add Item",
+      "subtotal": "Subtotal"
+    }
+  },
+  "common": {
+    "cancel": "Cancel",
+    "save": "Save",
+    "loading": "Loading...",
+    "remove": "Remove",
+  "trustDeduction": "Trust deduction"
+  }
+}

@@ -1,0 +1,41 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { prisma } from '@/lib/prisma';
+import jwt from 'jsonwebtoken';
+
+const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-change-me';
+
+function getUser(req: NextRequest) {
+  const auth = req.headers.get('authorization') || '';
+  const token = auth.startsWith('Bearer ') ? auth.slice(7) : null;
+  if (!token) return null;
+  try {
+    const d = jwt.verify(token, JWT_SECRET) as any;
+    return d ? { id: Number(d.sub), role: d.role } : null;
+  } catch {
+    return null;
+  }
+}
+
+// GET /api/expenses/pending
+export async function GET(req: NextRequest) {
+  try {
+    const user = getUser(req);
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!(user.role === 'OWNER' || user.role === 'ACCOUNTANT'))
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+
+    const expenses = await prisma.expense.findMany({
+      where: { approved: false },
+      orderBy: { incurredOn: 'asc' },
+      include: {
+        user: { select: { name: true } },
+        project: { select: { name: true, client: { select: { name: true } } } },
+      },
+    });
+
+    return NextResponse.json(expenses);
+  } catch (e) {
+    console.error('GET /api/expenses/pending', e);
+    return NextResponse.json({ error: 'Server error' }, { status: 500 });
+  }
+}

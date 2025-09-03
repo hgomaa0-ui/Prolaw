@@ -1,0 +1,24 @@
+{
+  "title": "Cost Report",
+  "headers": {
+    "project": "Project",
+    "lawyer": "Lawyer",
+    "hours": "Hours",
+    "rate": "Rate",
+    "total": "Total",
+    "ready": "Ready"
+  },
+  "buttons": {
+    "applyFilters": "Apply Filters",
+    "reset": "Reset",
+    "exportCSV": "Export CSV",
+    "exportPDF": "Export PDF",
+    "generateInvoice": "Generate Invoice",
+    "viewInvoice": "View Invoice"
+  },
+  "filters": {
+    "allClients": "All Clients",
+    "allProjects": "All Projects",
+    "allLawyers": "All Lawyers"
+  }
+}

@@ -1,0 +1,41 @@
+{
+  "invoices": {
+    "headers": {
+      "number": "رقم الفاتورة",
+      "client": "العميل",
+      "issueDate": "تاريخ الإصدار",
+      "status": "الحالة",
+      "total": "المجموع",
+      "actions": "الإجراءات"
+    },
+    "edit": {
+      "title": "تعديل الفاتورة",
+      "fields": {
+        "client": "العميل",
+        "project": "المشروع",
+        "issueDate": "تاريخ الإصدار",
+        "dueDate": "تاريخ الاستحقاق",
+        "language": "اللغة",
+        "currency": "العملة",
+        "discount": "الخصم",
+        "tax": "الضريبة",
+        "items": "البنود",
+        "description": "الوصف",
+        "quantity": "الكمية",
+        "unitPrice": "سعر الوحدة",
+        "total": "المجموع"
+      },
+      "selectClient": "اختر العميل",
+      "selectProject": "اختر المشروع",
+      "addItem": "إضافة بند",
+      "subtotal": "الإجمالي الفرعي"
+    }
+  },
+  "common": {
+    "cancel": "إلغاء",
+    "save": "حفظ",
+    "loading": "جارٍ التحميل...",
+    "remove": "إزالة",
+  "trustDeduction": "خصم من الأمانات"
+  }
+}
