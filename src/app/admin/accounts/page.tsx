@@ -10,31 +10,16 @@ export default function AccountsPage() {
   );
 }
 
+import React from 'react';
+
+export default function AccountsPage() {
   return (
     <div className="p-8">
       <h1 className="text-2xl font-bold mb-4">Chart of Accounts</h1>
-      <p>No accounts configured yet. Start creating your simplified chart.</p>
+      <p>No accounts configured yet.</p>
     </div>
   );
 }
-
-  return (
-    <div className="p-8">
-      <h1 className="text-2xl font-bold mb-4">Chart of Accounts</h1>
-      <p>No accounts configured yet. Start creating your simplified chart.</p>
-    </div>
-  );
-}
-  id: number;
-  code: string;
-  name: string;
-  type: string;
-  balances?: {currency:string;balance:number}[];
-}
-
-
-
-  const token = getAuth();
   const [role,setRole]=useState<string|null>(null);
   useEffect(()=>{
     if(token){ try{ setRole(JSON.parse(atob(token.split('.')[1])).role||null);}catch{} }
