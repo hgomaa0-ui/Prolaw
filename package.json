@@ -28,7 +28,7 @@
     "jspdf": "^3.0.1",
     "jspdf-autotable": "^5.0.2",
     "next": "15.3.5",
-    "nodemailer": "^7.0.5",
+    "nodemailer": "^6.9.7",
     "pdf-lib": "^1.17.1",
     "puppeteer": "^24.14.0",
     "react": "^18.2.0",
