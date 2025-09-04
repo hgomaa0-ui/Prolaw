@@ -1,4 +1,5 @@
 import jwt from 'jsonwebtoken';
+import type { NextAuthOptions } from "next-auth";
 import { NextRequest } from "next/server";
 
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-change-me';
@@ -73,3 +74,9 @@ export function clearAuth() {
     console.error("Error clearing auth:", error);
   }
 }
+
+// ---- temporary stub to satisfy next-auth imports during build ----
+export const authOptions: NextAuthOptions = {
+  providers: [],
+  session: { strategy: "jwt" },
+};

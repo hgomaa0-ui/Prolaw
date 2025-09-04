@@ -28,14 +28,16 @@
     "jspdf": "^3.0.1",
     "jspdf-autotable": "^5.0.2",
     "next": "15.3.5",
-    "next-auth": "^4.24.6",
-    "nodemailer": "6.9.7",
+    "nodemailer": "^6.9.7",
+    "next-auth": "^4.22.1",
     "pdf-lib": "^1.17.1",
     "puppeteer": "^24.14.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-hot-toast": "^2.5.2",
     "react-i18next": "^15.6.0",
+    "i18next": "^23.2.9",
+    "clsx": "^2.1.0",
     "swr": "^2.3.4"
   },
   "devDependencies": {
