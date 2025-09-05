@@ -209,7 +209,7 @@ model Project {
   companyId       Int
   company         Company       @relation(fields: [companyId], references: [id])
   /// Unique shorthand code (e.g. P0001-01)
-  code            String?       @unique
+  code            String?
   id              Int           @id @default(autoincrement())
   ownerId         Int
   clientId        Int
@@ -246,6 +246,8 @@ model Project {
   incomeCashLedgers IncomeCashLedger[]  @relation("ProjectIncomeLedger")
   officeExpenses    OfficeExpense[]
   attachments       ProjectAttachment[]
+
+  @@unique([companyId, code])
 }
 
 model TimeEntry {

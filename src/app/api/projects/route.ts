@@ -120,7 +120,7 @@ export const POST = withCompany(async (request: NextRequest) => {
     const candidate = `P${seq.toString().padStart(4, '0')}`;
     try {
       // attempt to reserve code by inserting a dummy then deleting (cheap) OR try create project directly later
-      const exists = await prisma.project.findFirst({ where: { code: candidate } });
+      const exists = await prisma.project.findFirst({ where: { code: candidate, companyId } });
       if (!exists) projCode = candidate;
     } catch {}
     if (!projCode) seq++;
