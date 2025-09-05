@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { mkdir, writeFile } from 'fs/promises';
+import { put } from '@vercel/blob';
 import path from 'path';
 import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
@@ -39,11 +39,10 @@ export async function PUT(req:NextRequest){
     const file = form.get('logo');
     if(file && file instanceof File && file.size>0){
       const ext = path.extname(file.name) || '.dat';
-      await mkdir(path.join(process.cwd(),'public','uploads','logos'),{recursive:true});
-      const filename = crypto.randomBytes(8).toString('hex')+ext;
-      const arrayBuffer = await file.arrayBuffer();
-      await writeFile(path.join(process.cwd(),'public','uploads','logos',filename),Buffer.from(arrayBuffer));
-      logoUrl = `/uploads/logos/${filename}`;
+      const filename = crypto.randomBytes(8).toString('hex') + ext;
+      // upload to Vercel Blob storage (public access)
+      const { url } = await put(`logos/${filename}`, file, { access: 'public' });
+      logoUrl = url;
     }
   }else if(contentType.startsWith('application/json')){
     data = await req.json();

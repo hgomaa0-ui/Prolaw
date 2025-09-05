@@ -1,5 +1,14 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, Prisma } from "@prisma/client";
 import { getCompanyId } from "./tenant-context";
+
+// Ensure Decimal values are serialized as strings to avoid floating point rounding issues
+if (!(Prisma as any).Decimal.prototype.toJSON) {
+  /* eslint-disable @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-call */
+  (Prisma as any).Decimal.prototype.toJSON = function () {
+    return this.toString();
+  };
+  /* eslint-enable */
+}
 
 // Prevent creating multiple instances in development hot-reload
 const globalForPrisma = global as unknown as { prisma?: PrismaClient };
