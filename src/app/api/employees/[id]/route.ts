@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { Prisma } from '@prisma/client';
 import jwt from 'jsonwebtoken';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-change-me';
@@ -53,14 +54,20 @@ export async function PUT(req: NextRequest, context: Promise<{ params: { id: str
   const tx = await prisma.$transaction(async (tx) => {
     const employee = await tx.employee.update({ where: { id }, data: updates });
     if (salaryAmount) {
-      await tx.salary.create({
-        data: {
-          employeeId: id,
-          amount: salaryAmount,
-          currency: salaryCurrency || 'USD',
-          effectiveFrom: salaryStart ? new Date(salaryStart) : new Date(),
-        },
-      });
+      const latest = await tx.salary.findFirst({ where: { employeeId: id }, orderBy: { effectiveFrom: 'desc' } });
+      const amountDecimal = new Prisma.Decimal(salaryAmount.toString());
+      if (latest) {
+        await tx.salary.update({ where: { id: latest.id }, data: { amount: amountDecimal, currency: salaryCurrency || latest.currency } });
+      } else {
+        await tx.salary.create({
+          data: {
+            employeeId: id,
+            amount: amountDecimal,
+            currency: salaryCurrency || 'USD',
+            effectiveFrom: salaryStart ? new Date(salaryStart) : new Date(),
+          },
+        });
+      }
     }
     // update user's position and/or role if provided
     if (positionId !== undefined || newRole !== undefined) {
