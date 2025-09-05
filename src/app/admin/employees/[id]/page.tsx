@@ -379,7 +379,7 @@ export default function EmployeeDetailPage() {
               value={newSalary.currency}
               onChange={(e) => setNewSalary({ ...newSalary, currency: e.target.value })}
             >
-              {["USD", "EUR", "SAR", "AED", "QAR", "KWD", "OMR", "JPY", "CNY", "INR"].map((c) => (
+              {["USD", "EUR", "EGP", "SAR", "AED", "QAR", "KWD", "OMR", "JPY", "CNY", "INR"].map((c) => (
                 <option key={c}>{c}</option>
               ))}
             </select>
