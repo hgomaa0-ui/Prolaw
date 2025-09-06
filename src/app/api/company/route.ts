@@ -1,7 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { put } from '@vercel/blob';
-import path from 'path';
+import { v2 as cloudinary } from 'cloudinary';
+
+// configure cloudinary once
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME!,
+  api_key: process.env.CLOUDINARY_API_KEY!,
+  api_secret: process.env.CLOUDINARY_API_SECRET!,
+});
+import path from 'path'; // retained for other uses if any, safe to keep
+// crypto no longer needed but keep in case other code uses it
 import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
 
@@ -38,11 +46,18 @@ export async function PUT(req:NextRequest){
     data.phone = (form.get('phone') as string) || undefined;
     const file = form.get('logo');
     if(file && file instanceof File && file.size>0){
-      const ext = path.extname(file.name) || '.dat';
-      const filename = crypto.randomBytes(8).toString('hex') + ext;
-      // upload to Vercel Blob storage (public access)
-      const { url } = await put(`logos/${filename}`, file, { access: 'public' });
-      logoUrl = url;
+      const arrayBuffer = await file.arrayBuffer();
+      const buffer = Buffer.from(arrayBuffer);
+      const uploadRes = await new Promise<{ secure_url: string }>((resolve, reject) => {
+        cloudinary.uploader.upload_stream(
+          { folder: 'logos', resource_type: 'image' },
+          (err, result) => {
+            if (err || !result) return reject(err);
+            resolve(result as any);
+          }
+        ).end(buffer);
+      });
+      logoUrl = uploadRes.secure_url;
     }
   }else if(contentType.startsWith('application/json')){
     data = await req.json();
