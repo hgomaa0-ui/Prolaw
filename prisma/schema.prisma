@@ -290,6 +290,8 @@ model Expense {
   invoiced    Boolean       @default(false)
   approved    Boolean       @default(false)
   receiptUrl  String?
+  receiptFile Bytes?
+  receiptMime String?
 
   project Project  @relation(fields: [projectId], references: [id])
   invoice Invoice? @relation(fields: [invoiceId], references: [id])
