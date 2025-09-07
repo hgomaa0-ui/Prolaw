@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { Prisma } from '@prisma/client';
 import jwt from 'jsonwebtoken';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-change-me';
@@ -55,14 +54,14 @@ export async function PUT(req: NextRequest, context: Promise<{ params: { id: str
     const employee = await tx.employee.update({ where: { id }, data: updates });
     if (salaryAmount) {
       const latest = await tx.salary.findFirst({ where: { employeeId: id }, orderBy: { effectiveFrom: 'desc' } });
-      const amountDecimal = new Prisma.Decimal(salaryAmount.toString());
+      const amountStr = salaryAmount?.toString();
       if (latest) {
-        await tx.salary.update({ where: { id: latest.id }, data: { amount: amountDecimal, currency: salaryCurrency || latest.currency } });
+        await tx.salary.update({ where: { id: latest.id }, data: { amount: amountStr, currency: salaryCurrency || latest.currency } });
       } else {
         await tx.salary.create({
           data: {
             employeeId: id,
-            amount: amountDecimal,
+            amount: amountStr,
             currency: salaryCurrency || 'USD',
             effectiveFrom: salaryStart ? new Date(salaryStart) : new Date(),
           },
