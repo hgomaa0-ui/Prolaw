@@ -1,12 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { writeFile, mkdir } from 'fs/promises';
-import path from 'path';
-import crypto from 'crypto';
+import { v2 as cloudinary } from 'cloudinary';
 
-export const runtime = "nodejs"; // ensure Node APIs available
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME!,
+});
+
+export const runtime = "nodejs";
 
 // POST /api/upload/receipt
-// Accepts multipart/form-data with field "file". Saves under /public/uploads/receipts/
+// Accepts multipart/form-data with field "file". Uploads to Cloudinary unsigned preset.
 // Returns { url }
 export async function POST(req: NextRequest) {
   try {
@@ -20,15 +22,19 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'No file' }, { status: 400 });
     }
 
-    const bytes = crypto.randomBytes(8).toString('hex');
-    const ext = path.extname(file.name) || '.jpg';
-    const filename = `${bytes}${ext}`;
-    const publicDir = path.join(process.cwd(), 'public', 'uploads', 'receipts');
-    await mkdir(publicDir, { recursive: true });
     const arrayBuffer = await file.arrayBuffer();
-    await writeFile(path.join(publicDir, filename), Buffer.from(arrayBuffer));
+    const mime = file.type || 'application/pdf';
+    const dataUri = `data:${mime};base64,${Buffer.from(arrayBuffer).toString('base64')}`;
 
-    const url = `/uploads/receipts/${filename}`;
+    const upload = await cloudinary.uploader.unsigned_upload(
+      dataUri,
+      process.env.CLOUDINARY_UNSIGNED_PRESET_RECEIPT!,
+      {
+        folder: 'receipts',
+        resource_type: 'auto',
+      }
+    );
+    const url = upload.secure_url;
     return NextResponse.json({ url }, { status: 201 });
   } catch (err) {
     console.error('upload receipt error', err);
