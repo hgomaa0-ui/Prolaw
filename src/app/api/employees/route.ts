@@ -93,7 +93,7 @@ export async function POST(req: NextRequest) {
       userId,
       salaries: {
         create: {
-          amount: salaryAmount,
+          amount: salaryAmount.toString(),
           currency: salaryCurrency,
           effectiveFrom: salaryStart ? new Date(salaryStart) : new Date(),
         },
