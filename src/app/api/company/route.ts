@@ -5,9 +5,7 @@ import { v2 as cloudinary } from 'cloudinary';
 // configure cloudinary once
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME!,
-  api_key: process.env.CLOUDINARY_API_KEY!,
-  api_secret: process.env.CLOUDINARY_API_SECRET!,
-});
+}); // unsigned preset: no key/secret needed
 import path from 'path'; // retained for other uses if any, safe to keep
 // crypto no longer needed but keep in case other code uses it
 import crypto from 'crypto';
@@ -47,16 +45,16 @@ export async function PUT(req:NextRequest){
     const file = form.get('logo');
     if(file && file instanceof File && file.size>0){
       const arrayBuffer = await file.arrayBuffer();
-      const buffer = Buffer.from(arrayBuffer);
-      const uploadRes = await new Promise<{ secure_url: string }>((resolve, reject) => {
-        cloudinary.uploader.upload_stream(
-          { folder: 'logos', resource_type: 'image' },
-          (err, result) => {
-            if (err || !result) return reject(err);
-            resolve(result as any);
-          }
-        ).end(buffer);
-      });
+      const mime = file.type || 'image/png';
+      const dataUri = `data:${mime};base64,${Buffer.from(arrayBuffer).toString('base64')}`;
+      const uploadRes = await cloudinary.uploader.unsigned_upload(
+        dataUri,
+        process.env.CLOUDINARY_UNSIGNED_PRESET!,
+        {
+          folder: 'logos',
+          resource_type: 'image',
+        }
+      );
       logoUrl = uploadRes.secure_url;
     }
   }else if(contentType.startsWith('application/json')){
