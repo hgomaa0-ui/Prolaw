@@ -1,16 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { put } from '@vercel/blob';
 import { prisma } from '@/lib/prisma';
 
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME!,
-});
-
 export const runtime = "nodejs";
+import crypto from 'crypto';
 
 // POST /api/upload/receipt
-// Accepts multipart/form-data with field "file". Uploads to Cloudinary unsigned preset.
-// Returns { url }
-// expects fields: file (File), expenseId (number)
+// يقبل multipart/form-data به الحقول: file (الإيصال)، expenseId (رقم المصروف).
+// يرفع الملف إلى Vercel Blob ويُخزّن الرابط public في حقل receiptUrl.
+// يُرجع { url } عند النجاح.
 export async function POST(req: NextRequest) {
   try {
     const contentType = req.headers.get('content-type') || '';
@@ -26,18 +24,23 @@ export async function POST(req: NextRequest) {
     const expenseIdRaw = formData.get('expenseId');
     if (!expenseIdRaw) return NextResponse.json({ error: 'Missing expenseId' }, { status: 400 });
     const expenseId = Number(expenseIdRaw);
-    const buffer = Buffer.from(await file.arrayBuffer());
-    const mime = file.type || 'application/pdf';
+        // رفع إلى Vercel Blob
+    const ext = file.name.split('.').pop() || 'dat';
+    const key = `receipts/${crypto.randomUUID()}.${ext}`;
+
+    const { url } = await put(key, file, {
+      access: 'public',
+      token: process.env.BLOB_RW_TOKEN,
+    });
 
     await prisma.expense.update({
       where: { id: expenseId },
       data: {
-        receiptFile: buffer,
-        receiptMime: mime,
+        receiptUrl: url,
       },
     });
 
-    return NextResponse.json({ ok: true }, { status: 201 });
+    return NextResponse.json({ url }, { status: 201 });
   } catch (err) {
     console.error('upload receipt error', err);
     return NextResponse.json({ error: 'Server error' }, { status: 500 });
