@@ -1,9 +1,3 @@
-○ Compiling /api/invoices/[id]/pdf ...
-✓ Compiled /api/invoices/[id]/pdf in 907ms (726 modules)
-GET /api/invoices/INV-00006/pdf 401 in 3072ms
-GET /api/invoices/INV-00006/pdf 401 in 58ms
-GET /api/invoices/INV-00006/pdf 401 in 46ms ✓ Compiled /api/invoices/[id]/pdf in 3.1s (451 modules)
-GET /api/invoices/INV-00006/pdf 401 in 5696ms
 
 import { useState } from 'react';
 import useSWR, { mutate } from 'swr';
