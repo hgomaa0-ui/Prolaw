@@ -9,6 +9,14 @@ const nextConfig = {
     ignoreBuildErrors: true,
   },
   reactStrictMode: true,
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: '**.vercel-storage.com',
+      },
+    ],
+  },
 }
 
 module.exports = nextConfig
