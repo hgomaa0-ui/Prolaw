@@ -34,7 +34,9 @@ export async function GET(req: NextRequest) {
     const expenses = await prisma.expense.findMany({
       where: { userId },
       orderBy: { incurredOn: 'desc' },
-      include: { project: { select: { name: true } } },
+      include: {
+        project: { select: { name: true, client: { select: { name: true } } } },
+      },
     });
 
     return NextResponse.json(expenses);
