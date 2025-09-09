@@ -122,7 +122,7 @@ export const GET = withCompany(async (req: NextRequest, companyId?: number) => {
 
 /* legacy auto-seed logic disabled
     const advances = await prisma.project.findMany({
-      where: { companyId, advanceAmount: { gt: 0 }, advanceCurrency: { not: null } },
+      where: { advanceAmount: { gt: 0 }, advanceCurrency: { not: null } },
       select: {
         clientId: true,
         advanceAmount: true,
