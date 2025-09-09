@@ -2,7 +2,6 @@
 "use client";
 import { useEffect, useState } from "react";
 import { getAuth } from "@/lib/auth";
-import Image from "next/image";
 
 interface Company {
   id: number;

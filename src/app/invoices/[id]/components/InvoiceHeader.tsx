@@ -2,7 +2,6 @@
 
 import { Invoice } from '@/types/invoice';
 import { useEffect, useState } from 'react';
-import Image from 'next/image';
 import { getAuth } from '@/lib/auth';
 // removed static FIRM_INFO
 import { useTranslation } from 'react-i18next';
