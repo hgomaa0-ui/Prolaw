@@ -36,7 +36,7 @@ export function InvoiceHeader({ invoice }: InvoiceHeaderProps) {
         {company && (
           <div className="max-w-xs">
             <h2 className="text-xl font-extrabold uppercase tracking-wide mb-2">{company.name}</h2>
-            {company.logoUrl && <Image src={company.logoUrl} alt="logo" width={120} height={120} className="mb-2"/>}
+            {company.logoUrl && <img src={company.logoUrl} alt="logo" width={120} height={120} className="mb-2 object-contain"/>}
                                   </div>
         )}
         {/* Invoice meta */}
