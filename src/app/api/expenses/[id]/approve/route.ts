@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { convert } from '@/lib/forex';
 import { postTransaction } from '@/lib/gl';
+import { getOrCreateExpenseAccount } from '@/lib/trust';
 
 
 
@@ -155,10 +156,19 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
     }
 
     // mark approved
-    let updated = await prisma.expense.update({
-      where: { id: expId },
-      data: { approved: true },
-    });
+    let updated = await prisma.expense.update({ where:{ id:expId }, data:{ approved:true } });
+
+    // -------------------------------------------------------------------------
+    // سجل قيد DEBIT فى حساب EXPENSE الخاص بالمشروع
+    // -------------------------------------------------------------------------
+    try {
+      const expAcct = await getOrCreateExpenseAccount(projectId, expense.project.clientId, currency);
+      await prisma.$transaction([
+        prisma.trustAccount.update({ where:{ id: expAcct.id }, data:{ balance:{ decrement: Number(expense.amount) } } }),
+        prisma.trustTransaction.create({ data:{ trustAccountId: expAcct.id, projectId, txnType:'DEBIT', amount: Number(expense.amount), description: `Expense #${expId}` } })
+      ]);
+    } catch(debitErr){ console.error('Trust debit for expense', debitErr); }
+
 
     // ---------------- Invoice linking + WIP GL ----------------
     try {
