@@ -46,7 +46,7 @@ export const GET = withCompany(async (req: NextRequest, companyId?: number) => {
       OR: [
         { client: { companyId } },
         { project: { companyId } }
-      ],
+      ], // companyId داخل relations فقط؛ عمود مستقل غير موجود
     } as any;
     if (clientId) where.clientId = Number(clientId);
     if (typeParam) {
@@ -272,6 +272,6 @@ export const POST = withCompany(async (req: NextRequest, companyId?: number) => 
   const exists = await prisma.trustAccount.findUnique({ where: { clientId_projectId_currency: { clientId, projectId, currency } } as any });
   if (exists) return NextResponse.json(exists);
 
-  const acct = await prisma.trustAccount.create({ data: { clientId, projectId, currency, companyId } });
+  const acct = await prisma.trustAccount.create({ data: { clientId, projectId, currency } });
   return NextResponse.json(acct, { status: 201 });
 });
