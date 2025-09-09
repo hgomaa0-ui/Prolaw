@@ -90,13 +90,7 @@ export default function CompanySettings() {
         <div>
           <label className="block mb-1">Company Logo</label>
           {company.logoUrl && (
-            <Image
-              src={company.logoUrl}
-              alt="Logo"
-              width={120}
-              height={120}
-              className="mb-2 border"
-            />
+            <img src={company.logoUrl} alt="Logo" width={120} height={120} className="mb-2 border object-contain" />
           )}
           <input
             type="file"
