@@ -49,11 +49,16 @@ export const GET = withCompany(async (req: NextRequest, companyId?: number) => {
       ], // companyId داخل relations فقط؛ عمود مستقل غير موجود
     } as any;
     if (clientId) where.clientId = Number(clientId);
-    if (typeParam) {
-      where.accountType = typeParam.toUpperCase();
+    if (!typeParam) {
+      // الوضع الافتراضى: إرجاع حسابات EXPENSE فقط
+      where.accountType = 'EXPENSE';
     } else {
-      // By default exclude TRUST accounts (only show EXPENSE etc.)
-      where.accountType = { not: 'TRUST' } as any;
+      const tp = typeParam.toUpperCase();
+      if (tp === 'ALL') {
+        // لا فلترة على النوع
+      } else {
+        where.accountType = tp;
+      }
     }
     if (projectIdParam) where.projectId = Number(projectIdParam);
     if (currencyParam) where.currency = currencyParam.toUpperCase();
