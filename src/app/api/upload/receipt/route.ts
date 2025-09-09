@@ -22,24 +22,19 @@ export async function POST(req: NextRequest) {
     }
 
     const expenseIdRaw = formData.get('expenseId');
-    if (!expenseIdRaw) return NextResponse.json({ error: 'Missing expenseId' }, { status: 400 });
-    const expenseId = Number(expenseIdRaw);
+    const expenseId = expenseIdRaw ? Number(expenseIdRaw) : null;
         // رفع إلى Vercel Blob
     const ext = file.name.split('.').pop() || 'dat';
     const key = `receipts/${crypto.randomUUID()}.${ext}`;
 
     const { url } = await put(key, file, {
       access: 'public',
-      token: process.env.BLOB_RW_TOKEN,
+      token: process.env.BLOB_RW_TOKEN || process.env.BLOB_READ_WRITE_TOKEN,
     });
 
-    await prisma.expense.update({
-      where: { id: expenseId },
-      data: {
-        receiptUrl: url,
-      },
-    });
-
+    if(expenseId){
+      await prisma.expense.update({ where:{ id:expenseId }, data:{ receiptUrl:url } });
+    }
     return NextResponse.json({ url }, { status: 201 });
   } catch (err) {
     console.error('upload receipt error', err);
