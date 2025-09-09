@@ -57,6 +57,8 @@ export const GET = withCompany(async (req: NextRequest, companyId?: number) => {
     }
     if (projectIdParam) where.projectId = Number(projectIdParam);
     if (currencyParam) where.currency = currencyParam.toUpperCase();
+    // تأكد من عدم وجود companyId مباشرة لأن الجدول لا يحوي هذا العمود
+    if ('companyId' in where) delete where.companyId;
 
     /* --- auto-seed from advance payments disabled per requirement to keep TRUST advances out of Project Trust Cash --- */
     const raw = await prisma.trustAccount.findMany({
