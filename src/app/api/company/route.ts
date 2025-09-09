@@ -1,13 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { v2 as cloudinary } from 'cloudinary';
+import { put } from '@vercel/blob';
 
-// configure cloudinary once
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME!,
-}); // unsigned preset: no key/secret needed
-import path from 'path'; // retained for other uses if any, safe to keep
-// crypto no longer needed but keep in case other code uses it
+// runtime nodejs needed for Blob SDK
+export const runtime = 'nodejs';
 import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
 
@@ -42,20 +38,12 @@ export async function PUT(req:NextRequest){
     data.name = (form.get('name') as string) || undefined;
     data.address = (form.get('address') as string) || undefined;
     data.phone = (form.get('phone') as string) || undefined;
-    const file = form.get('logo');
+        const file = form.get('logo');
     if(file && file instanceof File && file.size>0){
-      const arrayBuffer = await file.arrayBuffer();
-      const mime = file.type || 'image/png';
-      const dataUri = `data:${mime};base64,${Buffer.from(arrayBuffer).toString('base64')}`;
-      const uploadRes = await cloudinary.uploader.unsigned_upload(
-        dataUri,
-        process.env.CLOUDINARY_UNSIGNED_PRESET!,
-        {
-          folder: 'logos',
-          resource_type: 'image',
-        }
-      );
-      logoUrl = uploadRes.secure_url;
+      const ext = file.name.split('.').pop()||'png';
+      const key = `logos/${crypto.randomUUID()}.${ext}`;
+      const { url } = await put(key, file, { access:'public', token:process.env.BLOB_RW_TOKEN });
+      logoUrl = url;
     }
   }else if(contentType.startsWith('application/json')){
     data = await req.json();
