@@ -46,24 +46,17 @@ export const GET = withCompany(async (req: NextRequest, companyId?: number) => {
       OR: [
         { client: { companyId } },
         { project: { companyId } }
-      ], // companyId داخل relations فقط؛ عمود مستقل غير موجود
+      ],
     } as any;
     if (clientId) where.clientId = Number(clientId);
-    if (!typeParam) {
-      // الوضع الافتراضى: إرجاع حسابات EXPENSE فقط
-      where.accountType = 'EXPENSE';
+    if (typeParam) {
+      where.accountType = typeParam.toUpperCase();
     } else {
-      const tp = typeParam.toUpperCase();
-      if (tp === 'ALL') {
-        // لا فلترة على النوع
-      } else {
-        where.accountType = tp;
-      }
+      // By default exclude TRUST accounts (only show EXPENSE etc.)
+      where.accountType = { not: 'TRUST' } as any;
     }
     if (projectIdParam) where.projectId = Number(projectIdParam);
     if (currencyParam) where.currency = currencyParam.toUpperCase();
-    // تأكد من عدم وجود companyId مباشرة لأن الجدول لا يحوي هذا العمود
-    if ('companyId' in where) delete where.companyId;
 
     /* --- auto-seed from advance payments disabled per requirement to keep TRUST advances out of Project Trust Cash --- */
     const raw = await prisma.trustAccount.findMany({
@@ -279,6 +272,6 @@ export const POST = withCompany(async (req: NextRequest, companyId?: number) => 
   const exists = await prisma.trustAccount.findUnique({ where: { clientId_projectId_currency: { clientId, projectId, currency } } as any });
   if (exists) return NextResponse.json(exists);
 
-  const acct = await prisma.trustAccount.create({ data: { clientId, projectId, currency } });
+  const acct = await prisma.trustAccount.create({ data: { clientId, projectId, currency, companyId } });
   return NextResponse.json(acct, { status: 201 });
 });
