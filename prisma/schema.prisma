@@ -201,7 +201,6 @@ model Client {
   owner          User            @relation(fields: [ownerId], references: [id])
   projects       Project[]
   trustAccounts  TrustAccount[]
-  expenseCashLedgers ExpenseCashLedger[]
   invoices       Invoice[]
   documents      Document[]
   reportAccesses ReportAccess[]
@@ -246,7 +245,6 @@ model Project {
   advancePayments   AdvancePayment[]
   trustAccounts     TrustAccount[]
   trustTransactions TrustTransaction[]
-  expenseCashLedgers ExpenseCashLedger[]
   incomeCashLedgers IncomeCashLedger[] @relation("ProjectIncomeLedger")
   officeExpenses    OfficeExpense[]
   attachments       ProjectAttachment[]
@@ -438,7 +436,6 @@ model BankAccount {
   companyId         Int
   company           Company            @relation(fields: [companyId], references: [id])
   incomeCashLedgers IncomeCashLedger[]
-  expenseCashLedgers ExpenseCashLedger[]
   name              String
   balance           Decimal            @default(0)
   officeExpenses    OfficeExpense[]
