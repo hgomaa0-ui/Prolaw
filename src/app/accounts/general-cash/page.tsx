@@ -23,6 +23,14 @@ export default function CashLedgersPage() {
         <h2 className="text-lg font-semibold text-blue-600">Income Cash Ledger</h2>
         <p className="text-sm text-gray-600">View cash movements for office income.</p>
       </Link>
+
+      <Link
+        href="/accounts/expense-cash"
+        className="block rounded-lg border border-gray-300 p-4 shadow-sm transition-transform hover:-translate-y-1 hover:shadow-md"
+      >
+        <h2 className="text-lg font-semibold text-blue-600">Project Expense Cash</h2>
+        <p className="text-sm text-gray-600">View advance payments & expense deductions.</p>
+      </Link>
     </div>
     </div>
   );
