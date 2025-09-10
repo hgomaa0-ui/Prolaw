@@ -247,7 +247,7 @@ model Project {
   trustAccounts     TrustAccount[]
   trustTransactions TrustTransaction[]
   expenseCashLedgers ExpenseCashLedger[]
-  incomeCashLedgers IncomeCashLedger[]
+  incomeCashLedgers IncomeCashLedger[] @relation("ProjectIncomeLedger")
   officeExpenses    OfficeExpense[]
   attachments       ProjectAttachment[]
 
