@@ -48,6 +48,7 @@ export const GET = withCompany(async (req: NextRequest, companyId?: number) => {
         { project: { companyId } }
       ],
     } as any;
+    if ('companyId' in where) delete where.companyId;
     if (clientId) where.clientId = Number(clientId);
     if (typeParam) {
       where.accountType = typeParam.toUpperCase();
@@ -272,6 +273,6 @@ export const POST = withCompany(async (req: NextRequest, companyId?: number) => 
   const exists = await prisma.trustAccount.findUnique({ where: { clientId_projectId_currency: { clientId, projectId, currency } } as any });
   if (exists) return NextResponse.json(exists);
 
-  const acct = await prisma.trustAccount.create({ data: { clientId, projectId, currency, companyId } });
+  const acct = await prisma.trustAccount.create({ data: { clientId, projectId, currency } });
   return NextResponse.json(acct, { status: 201 });
 });
