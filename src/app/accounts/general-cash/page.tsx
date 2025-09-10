@@ -9,14 +9,6 @@ export default function CashLedgersPage() {
 
       <div className="flex flex-wrap gap-4">
       <Link
-        href="/accounts/project-trust"
-        className="block rounded-lg border border-gray-300 p-4 shadow-sm transition-transform hover:-translate-y-1 hover:shadow-md"
-      >
-        <h2 className="text-lg font-semibold text-blue-600">Project Trust Cash</h2>
-        <p className="text-sm text-gray-600">View trust funds held for projects.</p>
-      </Link>
-
-      <Link
         href="/accounts/income-cash"
         className="block rounded-lg border border-gray-300 p-4 shadow-sm transition-transform hover:-translate-y-1 hover:shadow-md"
       >
