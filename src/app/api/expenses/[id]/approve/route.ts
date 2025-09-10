@@ -165,7 +165,8 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
       const expAcct = await getOrCreateExpenseAccount(projectId, expense.project.clientId, currency);
       await prisma.$transaction([
         prisma.trustAccount.update({ where:{ id: expAcct.id }, data:{ balance:{ decrement: Number(expense.amount) } } }),
-        prisma.trustTransaction.create({ data:{ trustAccountId: expAcct.id, projectId, txnType:'DEBIT', amount: Number(expense.amount), description: `Expense #${expId}` } })
+        prisma.trustTransaction.create({ data:{ trustAccountId: expAcct.id, projectId, txnType:'DEBIT', amount: Number(expense.amount), description: `Expense #${expId}` } }),
+        prisma.expenseCashLedger.create({ data:{ companyId: expense.project.companyId, clientId: expense.project.clientId, projectId, amount: -Number(expense.amount), currency, notes: `Expense #${expId}` } })
       ]);
     } catch(debitErr){ console.error('Trust debit for expense', debitErr); }
 

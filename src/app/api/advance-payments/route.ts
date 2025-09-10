@@ -108,6 +108,10 @@ export async function POST(request: NextRequest) {
   // Update TrustAccount balance فقط لحسابات EXPENSE وليس TRUST
   // -----------------------------------------------------------------
   if (accountType === 'EXPENSE') {
+    // سجل فى ExpenseCashLedger كإيداع للمصروفات
+    await prisma.expenseCashLedger.create({
+      data:{ companyId: project.companyId, clientId: project.clientId, projectId, amount, currency, notes: notes || 'Expense advance' }
+    });
     const trustAcct = await prisma.trustAccount.findFirst({
       where: { projectId, currency, accountType: 'EXPENSE' },
     });
