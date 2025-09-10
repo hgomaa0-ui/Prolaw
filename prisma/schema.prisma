@@ -30,6 +30,7 @@ model Company {
   bankAccounts      BankAccount[]
   officeExpenses    OfficeExpense[]
   incomeCashLedgers IncomeCashLedger[]
+  expenseCashLedgers ExpenseCashLedger[]
 }
 
 // Enums
@@ -246,7 +247,8 @@ model Project {
   trustAccounts     TrustAccount[]
   trustTransactions TrustTransaction[]
   expenseCashLedgers ExpenseCashLedger[]
-  incomeCashLedgers IncomeCashLedger[]  @relation("ProjectIncomeLedger")
+  incomeCashLedgers IncomeCashLedger[]
+  expenseCashLedgers ExpenseCashLedger[]  @relation("ProjectIncomeLedger")
   officeExpenses    OfficeExpense[]
   attachments       ProjectAttachment[]
 
@@ -437,6 +439,7 @@ model BankAccount {
   companyId         Int
   company           Company            @relation(fields: [companyId], references: [id])
   incomeCashLedgers IncomeCashLedger[]
+  expenseCashLedgers ExpenseCashLedger[]
   name              String
   balance           Decimal            @default(0)
   officeExpenses    OfficeExpense[]
