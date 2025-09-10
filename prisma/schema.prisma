@@ -200,6 +200,7 @@ model Client {
   owner          User            @relation(fields: [ownerId], references: [id])
   projects       Project[]
   trustAccounts  TrustAccount[]
+  expenseCashLedgers ExpenseCashLedger[]
   invoices       Invoice[]
   documents      Document[]
   reportAccesses ReportAccess[]
