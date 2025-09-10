@@ -652,6 +652,24 @@ model IncomeCashLedger {
   @@index([companyId, createdAt])
 }
 
+// Expense cash ledger ---------------------------------------
+model ExpenseCashLedger {
+  id        Int      @id @default(autoincrement())
+  companyId Int
+  clientId  Int?
+  projectId Int?
+  amount    Decimal
+  currency  CurrencyCode @default(USD)
+  notes     String?
+  createdAt DateTime @default(now())
+
+  company Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  client  Client?  @relation(fields: [clientId], references: [id])
+  project Project? @relation(fields: [projectId], references: [id])
+
+  @@index([companyId, createdAt])
+}
+
 // -----------------------------------------------------------
 
 enum ApprovalType {
