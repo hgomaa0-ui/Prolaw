@@ -40,6 +40,7 @@ enum Role {
   ACCOUNTANT_MASTER // invoices + trusts + reports
   ACCOUNTANT_ASSISTANT // invoices + approve expenses (no trusts/reports)
   LAWYER_PARTNER // see lawyer reports, enter time/expenses, approve lawyer time
+  MANAGING_PARTNER // full reports + accounts access
   LAWYER_MANAGER // manage section lawyers, time/expenses, see performance reports
   HR_MANAGER // HR manager with full HR + payroll
   HR // human resources basic role
