@@ -29,7 +29,6 @@ const links:NavLink[] = [
   { href: "/invoices",  label: "Invoices", key:"invoices" },
   { href: "/admin/reports", label: "Reports", key:"reports" },
   { href: "/accounts", label: "Accounts", key:"accounts" },
-    { href: "/admin/trust", label: "Trust", key:"trust" },
   { href: "/admin/payroll", label: "Payroll", key:"payroll" },
   { href: "/admin", label: "Admin", key:"settings" },
   { href: "/admin/hr", label: "HR", key:"hr" },
