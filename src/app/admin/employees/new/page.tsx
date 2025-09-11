@@ -196,6 +196,7 @@ export default function NewEmployeePage() {
               "LAWYER",
               "LAWYER_MANAGER",
               "LAWYER_PARTNER",
+              "MANAGING_PARTNER",
               "ACCOUNTANT_MASTER",
               "ACCOUNTANT_ASSISTANT",
               "HR_MANAGER",
@@ -207,7 +208,7 @@ export default function NewEmployeePage() {
             ))}
           </select>
         </div>
-        {(form.role === 'LAWYER_MANAGER' || form.role === 'LAWYER_PARTNER') && (
+        {(form.role === 'LAWYER_MANAGER' || form.role === 'LAWYER_PARTNER' || form.role === 'MANAGING_PARTNER') && (
           <>
             <div>
               <label className="block font-medium">Managed Projects</label>

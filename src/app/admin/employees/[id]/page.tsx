@@ -41,6 +41,7 @@ const ROLE_OPTIONS = [
   "LAWYER",
   "LAWYER_MANAGER",
   "LAWYER_PARTNER",
+  "MANAGING_PARTNER",
   "ACCOUNTANT_MASTER",
   "ACCOUNTANT_ASSISTANT",
   "HR_MANAGER",
@@ -301,7 +302,7 @@ export default function EmployeeDetailPage() {
         </div>
       </div>
 
-      {((roleEdit ?? emp?.user?.role) === 'LAWYER_MANAGER' || (roleEdit ?? emp?.user?.role) === 'LAWYER_PARTNER') && (
+      {(['LAWYER_MANAGER','LAWYER_PARTNER','MANAGING_PARTNER'].includes(roleEdit ?? emp?.user?.role as string)) && (
         <section className="border rounded p-4 mb-6 space-y-4">
           <h2 className="text-lg font-semibold">Managed Scope</h2>
           <details className="border rounded p-3 bg-white">
