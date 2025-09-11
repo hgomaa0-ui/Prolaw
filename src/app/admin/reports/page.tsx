@@ -69,8 +69,6 @@ export default function AdminReportsPage() {
             <h2 className="mb-2 text-xl font-semibold text-blue-600">{tile.title}</h2>
             <p className="text-sm text-gray-600">{tile.description}</p>
           </Link>
-
-      <li><Link className="text-blue-600 underline" href="/admin/reports/banks">Bank Accounts Report</Link></li>
         ))}
       </div>
     </div>
