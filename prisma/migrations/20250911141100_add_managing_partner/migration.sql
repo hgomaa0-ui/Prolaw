@@ -1,0 +1,2 @@
+-- Migration: add MANAGING_PARTNER value to Role enum
+ALTER TYPE "Role" ADD VALUE IF NOT EXISTS 'MANAGING_PARTNER';
