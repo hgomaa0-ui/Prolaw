@@ -19,6 +19,12 @@ export default function AdminReportsPage() {
       key: "profit"
     },
     {
+      href: "/admin/reports/bank-accounts",
+      title: "Bank Accounts Report",
+      description: "View bank account transactions and balances.",
+      key: "bank-accounts"
+    },
+    {
       href: "/admin/reports/office-expenses",
       title: "Office Expenses",
       description: "All office expense transactions and totals.",
@@ -63,6 +69,8 @@ export default function AdminReportsPage() {
             <h2 className="mb-2 text-xl font-semibold text-blue-600">{tile.title}</h2>
             <p className="text-sm text-gray-600">{tile.description}</p>
           </Link>
+
+      <li><Link className="text-blue-600 underline" href="/admin/reports/banks">Bank Accounts Report</Link></li>
         ))}
       </div>
     </div>
