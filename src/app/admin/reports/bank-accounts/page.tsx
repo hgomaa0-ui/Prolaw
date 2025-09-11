@@ -30,7 +30,8 @@ export default function BankAccountsReport() {
       const url = new URL("/api/reports/banks", window.location.origin);
       url.searchParams.set("from", from);
       url.searchParams.set("to", to);
-      const res = await fetch(url.toString());
+      const token = typeof window!=="undefined" ? localStorage.getItem('token'):null;
+      const res = await fetch(url.toString(), { headers: token? { Authorization:`Bearer ${token}` }: {} });
       const json = await res.json();
       setData(json);
     } finally {
