@@ -5,8 +5,6 @@ import { withCompany } from '@/lib/with-company';
 // GET /api/reports/banks?from=YYYY-MM-DD&to=YYYY-MM-DD
 // Returns [{ bank:{id,name,currency}, balance, transactions:[...] }]
 export const GET = withCompany(async (req: NextRequest, companyId?: number) => {
-  if (!companyId) return NextResponse.json([]);
-
   const from = req.nextUrl.searchParams.get('from');
   const to = req.nextUrl.searchParams.get('to');
 
