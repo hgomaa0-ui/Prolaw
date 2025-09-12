@@ -48,13 +48,11 @@ function decodeRole(token?:string):UserRole|null{
 import { useEffect, useState } from "react";
 
 export default function NavBar() {
-  const [mounted,setMounted]=useState(false);
   const [role,setRole]=useState<UserRole|null>(null);
   const [unread,setUnread]=useState(0);
   
   const pathname = usePathname();
   useEffect(()=>{
-    setMounted(true);
     const token=getAuth()||undefined;
     const payload=token?JSON.parse(atob(token.split('.')[1])):null;
     setRole(payload?.role||null);
@@ -62,7 +60,6 @@ export default function NavBar() {
     fetch('/api/notifications?unread=true',{headers: token?{Authorization:`Bearer ${token}`}:{}}).then(r=>r.json()).then((list:any)=>setUnread(list.length)).catch(()=>{});
   },[]);
   // Hide navbar on login, register or when not authenticated
-  if(!mounted) return null;
   const tokenRaw = getAuth();
   if (!tokenRaw || pathname === "/" || pathname.includes("login") || pathname.includes("register")) return null;
 

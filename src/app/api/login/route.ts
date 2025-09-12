@@ -32,10 +32,15 @@ export async function POST(request: NextRequest) {
     const token = jwt.sign(
       { id: user.id, email: user.email, role: user.role, companyId: user.companyId },
       JWT_SECRET,
-      { expiresIn: "7d" }
+      { expiresIn: "1h" }
     );
 
-    return NextResponse.json({ token }, { status: 200 });
+    const res = NextResponse.json({ token }, { status: 200 });
+    res.headers.set(
+      "Set-Cookie",
+      `token=${token}; Max-Age=3600; Path=/; HttpOnly; SameSite=Lax${process.env.NODE_ENV === 'production' ? '; Secure' : ''}`
+    );
+    return res;
   } catch (err) {
     console.error("/api/login error", err);
     return NextResponse.json({ error: "Server error" }, { status: 500 });

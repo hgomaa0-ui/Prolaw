@@ -7,23 +7,15 @@ const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-change-me';
 // للحصول على token في العميل (المتصفح)
 export function getAuth(): string | null {
   try {
-    // Get token from localStorage first
-    const token = localStorage.getItem('token');
-    if (token) return token;
+    // Try cookie first (works on first render)
+    const cookieToken = document.cookie.match(/(^| )token=([^;]+)/)?.[2] || null;
+    if (cookieToken) return cookieToken;
 
-    // If not in localStorage, try cookies
-    const cookies = document.cookie.split('; ').reduce((acc: { [key: string]: string }, cookie) => {
-      const [name, value] = cookie.split('=');
-      acc[name.trim()] = value.trim();
-      return acc;
-    }, {});
-
-    const cookieToken = cookies.token;
-    if (!cookieToken) return null;
-
-    // Store token in localStorage for future use
-    localStorage.setItem('token', cookieToken);
-    return cookieToken;
+    // Fallback to localStorage
+    if (typeof localStorage !== 'undefined') {
+      return localStorage.getItem('token');
+    }
+    return null;
   } catch (error) {
     return null;
   }
@@ -52,11 +44,7 @@ export function getAuthServer(request: NextRequest): string | null {
 // لحفظ token
 export function setAuth(token: string) {
   try {
-    // Save in localStorage
-    localStorage.setItem('token', token);
-
-    // Save in cookies
-    document.cookie = `token=${token}; Path=/; SameSite=Lax${process.env.NODE_ENV === 'production' ? '; Secure' : ''}`;
+    document.cookie = `token=${token}; Max-Age=3600; Path=/; SameSite=Lax${process.env.NODE_ENV === 'production' ? '; Secure' : ''}`;
   } catch (error) {
     console.error("Error setting auth:", error);
   }
@@ -65,9 +53,6 @@ export function setAuth(token: string) {
 // لمسح token
 export function clearAuth() {
   try {
-    // Clear from localStorage
-    localStorage.removeItem('token');
-
     // Clear from cookies
     document.cookie = `token=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax${process.env.NODE_ENV === 'production' ? '; Secure' : ''}`;
   } catch (error) {
