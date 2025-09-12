@@ -11,7 +11,7 @@ export const GET = withCompany(async (req: NextRequest, companyId?: number) => {
   const to = req.nextUrl.searchParams.get('to');
 
   const banks = await prisma.bankAccount.findMany({
-    where: { companyId },
+    where: { OR: [ { companyId }, { companyId: null } ] },
     orderBy: { name: 'asc' },
   });
 
