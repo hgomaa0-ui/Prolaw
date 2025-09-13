@@ -22,6 +22,7 @@ export default function BankTransferPage() {
   const [fromBankId, setFromBankId] = useState<number | ''>('');
   const [toBankId, setToBankId] = useState<number | ''>('');
   const [amount, setAmount] = useState('');
+  const [rate, setRate] = useState('');
   const [notes, setNotes] = useState('');
   const [busy, setBusy] = useState(false);
 
@@ -29,10 +30,10 @@ export default function BankTransferPage() {
     e.preventDefault();
     if (!fromBankId || !toBankId || !amount) return;
     setBusy(true);
-    const res = await fetch('/api/bank-transfers', {
+    const res = await fetch('/api/banks/transfer', {
       method: 'POST',
       headers,
-      body: JSON.stringify({ fromBankId, toBankId, amount: Number(amount), notes }),
+      body: JSON.stringify({ fromBankId, toBankId, amount: Number(amount), notes, rate: rate? Number(rate): undefined }),
     });
     setBusy(false);
     if (res.ok) {
@@ -72,6 +73,14 @@ export default function BankTransferPage() {
           <label className="text-sm">Amount</label>
           <input type="number" step="0.01" value={amount} onChange={(e)=>setAmount(e.target.value)} className="border px-2 py-1" />
         </div>
+        {/* rate field shows only if currencies differ */}
+        {(fromBankId && toBankId && banks.find((b:any)=>b.id===fromBankId)?.currency !== banks.find((b:any)=>b.id===toBankId)?.currency) && (
+          <div className="flex flex-col">
+            <label className="text-sm">Rate (1 {banks.find((b:any)=>b.id===fromBankId)?.currency} = ? {banks.find((b:any)=>b.id===toBankId)?.currency})</label>
+            <input type="number" step="0.0001" value={rate} onChange={(e)=>setRate(e.target.value)} className="border px-2 py-1" />
+          </div>
+        )}
+
         <div className="flex flex-col flex-1">
           <label className="text-sm">Notes</label>
           <input value={notes} onChange={(e)=>setNotes(e.target.value)} className="border px-2 py-1 w-full" />
