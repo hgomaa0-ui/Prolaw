@@ -8,8 +8,10 @@ export const GET = withCompany(async (req: NextRequest, companyId?: number) => {
   const from = req.nextUrl.searchParams.get('from');
   const to = req.nextUrl.searchParams.get('to');
 
+  const bankWhere = companyId !== undefined ? { OR: [ { companyId }, { companyId: null } ] } : {};
+
   const banks = await prisma.bankAccount.findMany({
-    where: { OR: [ { companyId }, { companyId: null } ] },
+    where: bankWhere,
     orderBy: { name: 'asc' },
   });
 
