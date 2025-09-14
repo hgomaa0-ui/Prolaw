@@ -42,20 +42,14 @@ export const GET = withCompany(async (req: NextRequest, companyId?: number) => {
     const projectIdParam = req.nextUrl.searchParams.get('projectId');
     const currencyParam = req.nextUrl.searchParams.get('currency');
 
-    const where: any = {
-      OR: [
-        { client: { id: clientId } },
-        { project: { id: projectIdParam } }
-      ],
-    } as any;
+    const where: any = {};
     if (clientId) where.clientId = Number(clientId);
+    if (projectIdParam) where.projectId = Number(projectIdParam);
     if (typeParam) {
       where.accountType = typeParam.toUpperCase();
     } else {
-      // By default exclude TRUST accounts (only show EXPENSE etc.)
       where.accountType = { not: 'TRUST' } as any;
     }
-    if (projectIdParam) where.projectId = Number(projectIdParam);
     if (currencyParam) where.currency = currencyParam.toUpperCase();
 
     /* --- auto-seed from advance payments disabled per requirement to keep TRUST advances out of Project Trust Cash --- */
