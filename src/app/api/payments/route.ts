@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
-import { postTransaction } from '@/lib/gl';
 import { convert } from '@/lib/forex';
 import jwt from 'jsonwebtoken';
 
@@ -58,7 +57,11 @@ export async function POST(req: NextRequest){
     const bank = await prisma.bankAccount.findUnique({ where:{ id: bankId } });
     if(!bank) return NextResponse.json({ error:'Bank not found' },{status:404});
     const depositAmt = await convert(payAmt, invoice.currency, bank.currency);
-
+    await prisma.$transaction([
+      prisma.bankAccount.update({ where:{ id: bankId }, data:{ balance:{ increment: depositAmt } } }),
+      prisma.bankTransaction.create({ data:{ bankId, amount: depositAmt, currency: bank.currency, memo:`Invoice ${invoice.invoiceNumber} payment` } }),
+      prisma.incomeCashLedger.create({ data:{ companyId, bankId, projectId: invoice.projectId, source:'INVOICE_PAYMENT', amount: payAmt, currency: invoice.currency, notes:`Invoice ${invoice.invoiceNumber} payment` } })
+    ]);
   }
   await prisma.payment.create({ data:{ invoiceId, amount:payAmt, paidOn:new Date(), gateway:source } });
   const totalPaid = await prisma.payment.aggregate({ _sum:{ amount:true }, where:{ invoiceId } }).then(r=>Number(r._sum.amount||0));
