@@ -28,6 +28,7 @@ model Company {
   invoices          Invoice[]
   payrollBatches    PayrollBatch[]
   bankAccounts      BankAccount[]
+  bankTransactions BankTransaction[]
   officeExpenses    OfficeExpense[]
   incomeCashLedgers IncomeCashLedger[]
   expenseCashLedgers ExpenseCashLedger[]
