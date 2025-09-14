@@ -17,7 +17,8 @@ export const POST = withCompany(async (req:NextRequest, companyId?:number)=>{
     }
     if(fromBankId===toBankId) return NextResponse.json({error:'Same bank'}, {status:400});
 
-    const [fromBank,toBank] = await prisma.bankAccount.findMany({where:{id:{in:[fromBankId,toBankId]}}});
+    const fromBank = await prisma.bankAccount.findUnique({where:{id:fromBankId}});
+    const toBank   = await prisma.bankAccount.findUnique({where:{id:toBankId}});
     if(!fromBank || !toBank) return NextResponse.json({error:'Bank not found'},{status:404});
 
     // compute target amount
@@ -30,7 +31,7 @@ export const POST = withCompany(async (req:NextRequest, companyId?:number)=>{
     await prisma.$transaction([
       // withdraw from source bank
       prisma.bankAccount.update({where:{id:fromBankId}, data:{ balance: { decrement: amount } }}),
-      prisma.bankTransaction.create({data:{ bankId: fromBankId, amount, currency: fromBank.currency, memo: notes || `Transfer to ${toBank.name}` }}),
+      prisma.bankTransaction.create({data:{ bankId: fromBankId, amount: -amount, currency: fromBank.currency, memo: notes || `Transfer to ${toBank.name}` }}),
       // deposit to target bank
       prisma.bankAccount.update({where:{id:toBankId}, data:{ balance: { increment: targetAmount } }}),
       prisma.bankTransaction.create({data:{ bankId: toBankId, amount: targetAmount, currency: toBank.currency, memo: notes || `Transfer from ${fromBank.name}` }}),
