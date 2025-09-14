@@ -44,11 +44,10 @@ export const GET = withCompany(async (req: NextRequest, companyId?: number) => {
 
     const where: any = {
       OR: [
-        { client: { companyId } },
-        { project: { companyId } }
+        { client: { id: clientId } },
+        { project: { id: projectIdParam } }
       ],
     } as any;
-    if ('companyId' in where) delete where.companyId;
     if (clientId) where.clientId = Number(clientId);
     if (typeParam) {
       where.accountType = typeParam.toUpperCase();
