@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 export async function POST(request: NextRequest) {
   try {
     const data = await request.json();
+    const { companyId } = getAuthInfo(request);
 
     if (!data.clientId)
       return NextResponse.json({ error: "Client ID is required" }, { status: 400 });
@@ -24,6 +25,7 @@ export async function POST(request: NextRequest) {
     const dataToCreate: any = {
       clientId: data.clientId,
       invoiceNumber,
+      ...(companyId ? { companyId } : {}),
       issueDate: data.issueDate ? new Date(data.issueDate) : new Date(),
       dueDate: data.dueDate ? new Date(data.dueDate) : new Date(Date.now() + 30*24*60*60*1000),
       status: (data.status ? String(data.status).toUpperCase() : "DRAFT") as any,
