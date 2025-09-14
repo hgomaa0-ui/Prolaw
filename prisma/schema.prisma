@@ -475,6 +475,8 @@ model BankTransaction {
   id        Int          @id @default(autoincrement())
   bankId    Int
   bank      BankAccount  @relation(fields: [bankId], references: [id])
+  companyId Int?
+  company   Company?     @relation(fields: [companyId], references: [id])
   amount    Decimal
   currency  CurrencyCode
   memo      String?
