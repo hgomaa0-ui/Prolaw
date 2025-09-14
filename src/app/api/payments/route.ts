@@ -36,13 +36,7 @@ export async function POST(req: NextRequest){
   if(!invoice) return NextResponse.json({error:'Invoice not found'},{status:404});
   const payAmt = Number(amount)|| Number(invoice.total) - await prisma.payment.aggregate({ _sum:{ amount:true }, where:{ invoiceId } }).then(r=>Number(r._sum.amount||0));
   if(payAmt<=0) return NextResponse.json({ error:'Nothing to pay' },{status:400});
-  const companyId=invoice.companyId;
-  // accounts
-  const ar= await prisma.account.findFirst({ where:{ companyId, code:'1100' } });
-  const opCash= await prisma.account.findFirst({ where:{ companyId, code:'1000' } });
-  const trustCash= await prisma.account.findFirst({ where:{ companyId, code:'1020' } });
-  const trustLiab= await prisma.account.findFirst({ where:{ companyId, code:'2000' } });
-  if(!ar||!opCash||!trustCash||!trustLiab) return NextResponse.json({ error:'COA missing'},{status:500});
+  const companyId = invoice.companyId;
 
   if(source==='BANK'){
     if(!bankId) return NextResponse.json({ error:'bankId required for BANK source' },{status:400});
@@ -56,35 +50,15 @@ export async function POST(req: NextRequest){
       prisma.incomeCashLedger.create({ data:{ companyId, bankId, projectId: invoice.projectId, source:'INVOICE_PAYMENT', amount: payAmt, currency: invoice.currency, notes:`Invoice ${invoice.invoiceNumber} payment` } })
     ]);
 
-    await postTransaction({memo:`Invoice payment ${invoice.invoiceNumber}`,createdBy:userId,lines:[
-      {accountId: opCash.id, debit:payAmt, currency:invoice.currency},
-      {accountId: ar.id, credit:payAmt, currency:invoice.currency}
-    ]});
   }
   else if(source==='TRUST'){
     // reduce trust liability, cash, AR
-    await postTransaction({memo:`Trust payment for invoice ${invoice.invoiceNumber}`,createdBy:userId,lines:[
-      {accountId: trustLiab.id, debit:payAmt, currency:invoice.currency},
-      {accountId: trustCash.id, credit:payAmt, currency:invoice.currency},
-      {accountId: trustCash.id, debit:payAmt, currency:invoice.currency},
-      {accountId: ar.id, credit:payAmt, currency:invoice.currency}
-    ]});
   } else if (source==='OPERATING') {
     if(!bankId) return NextResponse.json({ error:'bankId required for OPERATING source' },{status:400});
     const bank = await prisma.bankAccount.findUnique({ where:{ id: bankId } });
     if(!bank) return NextResponse.json({ error:'Bank not found' },{status:404});
     const depositAmt = await convert(payAmt, invoice.currency, bank.currency);
 
-    await prisma.$transaction([
-      prisma.bankAccount.update({ where:{ id: bankId }, data:{ balance:{ increment: depositAmt } } }),
-      prisma.bankTransaction.create({ data:{ bankId, amount: depositAmt, currency: bank.currency, memo:`Invoice ${invoice.invoiceNumber} payment` } }),
-      prisma.incomeCashLedger.create({ data:{ companyId, bankId, projectId: invoice.projectId, source:'INVOICE_PAYMENT', amount: payAmt, currency: invoice.currency, notes:`Invoice ${invoice.invoiceNumber} payment` } })
-    ]);
-
-    await postTransaction({memo:`Payment invoice ${invoice.invoiceNumber}`,createdBy:userId,lines:[
-      {accountId: opCash.id, debit:payAmt, currency:invoice.currency},
-      {accountId: ar.id, credit:payAmt, currency:invoice.currency}
-    ]});
   }
   await prisma.payment.create({ data:{ invoiceId, amount:payAmt, paidOn:new Date(), gateway:source } });
   const totalPaid = await prisma.payment.aggregate({ _sum:{ amount:true }, where:{ invoiceId } }).then(r=>Number(r._sum.amount||0));
