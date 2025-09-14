@@ -11,8 +11,8 @@ import { withCompany } from '@/lib/with-company';
 export const POST = withCompany(async (req:NextRequest, companyId?:number)=>{
   if(!companyId) return NextResponse.json({error:'No company'}, {status:400});
   try{
-    const { fromBankId, toBankId, amount, currency, rate, notes } = await req.json();
-    if(!fromBankId || !toBankId || !amount || !currency) {
+    const { fromBankId, toBankId, amount, rate, notes } = await req.json();
+    if(!fromBankId || !toBankId || !amount) {
       return NextResponse.json({error:'Missing fields'},{status:400});
     }
     if(fromBankId===toBankId) return NextResponse.json({error:'Same bank'}, {status:400});
