@@ -65,6 +65,15 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
   if(wasPending && status === 'APPROVED'){
     const days = Math.ceil((updatedLeave.endDate.getTime()-updatedLeave.startDate.getTime())/86400000)+1;
     await prisma.employee.update({ where:{ id: updatedLeave.employeeId}, data:{ leaveBalanceDays:{ decrement: days }}});
+    // if UNPAID leave, create monetary penalty based on latest salary
+    if(updatedLeave.type==='UNPAID'){
+      const latestSalary = await prisma.salary.findFirst({ where:{ employeeId: updatedLeave.employeeId }, orderBy:{ effectiveFrom:'desc' } });
+      if(latestSalary){
+        const daily = Number(latestSalary.amount)/30;
+        const amount = (daily * days).toFixed(2);
+        await prisma.penalty.create({ data:{ employeeId: updatedLeave.employeeId, amount, currency: latestSalary.currency, reason: 'UNPAID_LEAVE', date: new Date(), createdById: userId? Number(userId): undefined }});
+      }
+    }
   }
 
   // create notification for employee
