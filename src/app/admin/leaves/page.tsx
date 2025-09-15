@@ -36,7 +36,7 @@ export default function LeavesPage() {
     const t = getAuth();
     setToken(t);
     const decoded: any = t ? decodeToken(t) : {};
-    setIsHR(decoded.role === "ADMIN" || decoded.role === "HR_MANAGER");
+    setIsHR(decoded.role === "ADMIN" || decoded.role === "HR_MANAGER" || decoded.role === "OWNER");
   }, []);
 
   const [filter, setFilter] = useState({ from: "", to: "" });

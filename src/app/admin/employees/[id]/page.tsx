@@ -11,17 +11,15 @@ interface Salary {
   effectiveFrom: string;
 }
 interface Employee {
-  email?: string;
   id: number;
   name: string;
   status: string;
+  email?: string;
   department?: string;
   hireDate?: string;
+  leaveBalanceDays?: number;
   salaries: Salary[];
-  user?: {
-    positionId?: number;
-    role?: string;
-  };
+  user?: { positionId?: number; role?: string };
 }
 
 interface Penalty {
@@ -61,6 +59,7 @@ export default function EmployeeDetailPage() {
   const [newSalary, setNewSalary] = useState({ amount: "", currency: "USD" });
   const [emailEdit, setEmailEdit] = useState<string>("");
   const [statusEdit, setStatusEdit] = useState<string>("ACTIVE");
+  const [balanceEdit, setBalanceEdit] = useState<number>(0);
   const [positions, setPositions] = useState<Position[]>([]);
   const [positionEdit, setPositionEdit] = useState<number | null>(null);
   const [roleEdit, setRoleEdit] = useState<string | null>(null);
@@ -68,6 +67,7 @@ export default function EmployeeDetailPage() {
   const [lawyers,setLawyers]=useState<{id:number;name:string}[]>([]);
   const [projectIds,setProjectIds]=useState<number[]>([]);
   const [lawyerIds,setLawyerIds]=useState<number[]>([]);
+  const isHR = roleEdit === "HR_MANAGER" || roleEdit === "HR";
 
   const fetchEmp = async () => {
     // fetch employee details
@@ -83,6 +83,7 @@ export default function EmployeeDetailPage() {
       setLawyerIds(data.lawyerIds ?? []);
       setEmailEdit(data.email || "");
       setStatusEdit(data.status);
+      setBalanceEdit(Number(data.leaveBalanceDays||0));
     } catch (e: any) {
       setError(e.message);
     } finally {
@@ -234,6 +235,26 @@ export default function EmployeeDetailPage() {
     }
   };
 
+  const handleSaveBalance = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAdding(true);
+    setError(null);
+    try {
+      const token = getAuth();
+      const res = await fetch(`/api/employees/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ leaveBalanceDays: balanceEdit })
+      });
+      if (!res.ok) throw new Error(await res.text());
+      await fetchEmp();
+    } catch (e:any) {
+      setError(e.message);
+    } finally {
+      setAdding(false);
+    }
+  };
+
   if (loading) return <p className="p-8">Loading…</p>;
   if (error) return <p className="p-8 text-red-600">{error}</p>;
   if (!emp) return <p className="p-8">Not found</p>;
@@ -284,6 +305,18 @@ export default function EmployeeDetailPage() {
             </button>
           </form>
         </div>
+        {/* Leave Balance */}
+        {isHR && (
+          <div className="mt-4">
+            <form onSubmit={handleSaveBalance} className="flex items-end gap-4">
+              <div>
+                <label className="block text-sm">Leave Balance (days)</label>
+                <input type="number" step="0.1" className="rounded border px-3 py-2 w-24" value={balanceEdit} onChange={(e)=>setBalanceEdit(Number(e.target.value))} />
+              </div>
+              <button disabled={adding} className="rounded bg-blue-600 px-4 py-2 text-white disabled:opacity-50">{adding? 'Saving…':'Save Balance'}</button>
+            </form>
+          </div>
+        )}
         {/* Role */}
         <div className="mt-4">
           <form onSubmit={handleUpdateRole} className="flex items-end gap-4">
