@@ -7,12 +7,14 @@ export const GET = withCompany(async (req: NextRequest, companyId?: number) => {
   const to = req.nextUrl.searchParams.get('to');
 
   const where: any = {};
-  if (companyId) where.employee = { companyId };
+  if (companyId) where.employee = { is: { companyId } } as any;
   if (from) where.clockIn = { gte: new Date(from) };
   if (to) {
     where.clockIn = where.clockIn || {};
     (where.clockIn as any).lte = new Date(to);
   }
+  // remove accidental companyId filter
+  if ('companyId' in where) delete (where as any).companyId;
 
   const records = await prisma.attendance.findMany({
     where,
