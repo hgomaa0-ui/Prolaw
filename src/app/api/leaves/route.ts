@@ -80,6 +80,15 @@ export async function POST(req: NextRequest) {
   if (!employeeId || !startDate || !endDate || !type) {
     return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
   }
+  // compute days diff inclusive
+  const daysDiff = Math.floor((new Date(endDate).getTime() - new Date(startDate).getTime())/(24*60*60*1000))+1;
+  if(daysDiff<=0) return NextResponse.json({error:'Invalid date range'},{status:400});
+  if(type==='ANNUAL'){
+    const emp = await prisma.employee.findUnique({where:{id:employeeId}});
+    if(!emp) return NextResponse.json({error:'Employee not found'},{status:404});
+    const bal = Number(emp.leaveBalanceDays||0);
+    if(bal<daysDiff) return NextResponse.json({error:`Insufficient leave balance (${bal} days available)`},{status:400});
+  }
   const leave = await prisma.leaveRequest.create({
     data: {
       employeeId,
