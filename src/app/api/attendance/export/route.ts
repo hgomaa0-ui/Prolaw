@@ -21,8 +21,8 @@ export async function GET(req: NextRequest) {
   });
 
   const rows = [
-    ['Employee', 'ClockIn', 'ClockOut'],
-    ...records.map((r) => [r.employee.name, r.clockIn.toISOString(), r.clockOut ? r.clockOut.toISOString() : '']),
+    ['EmployeeId','Employee', 'ClockIn', 'ClockOut'],
+    ...records.map((r) => [r.employeeId?.toString()||'', r.employee.name, r.clockIn.toISOString(), r.clockOut ? r.clockOut.toISOString() : '']),
   ];
   const csv = rows
     .map((row) =>
