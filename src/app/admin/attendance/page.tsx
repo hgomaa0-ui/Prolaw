@@ -37,7 +37,7 @@ export default function AttendancePage() {
   useEffect(() => {
     fetchData();
     // fetch employees list
-    fetch('/api/employees')
+    fetch('/api/employees', { headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) } })
       .then(r=>r.json()).then((arr)=> setEmpOptions(arr.map((e:any)=>({id:e.id,name:e.name}))))
       .catch(()=>{});
   }, []);
