@@ -59,6 +59,7 @@ export default function EmployeesPage() {
       <table className="min-w-full border-collapse">
         <thead>
           <tr className="bg-gray-100 text-left">
+            <th className="border px-4 py-2">ID</th>
             <th className="border px-4 py-2">Name</th>
             <th className="border px-4 py-2">Email</th>
             <th className="border px-4 py-2">Department</th>
@@ -73,6 +74,7 @@ export default function EmployeesPage() {
             const latest = e.salaries[0];
             return (
               <tr key={e.id} className="hover:bg-gray-50">
+                <td className="border px-4 py-2">{e.id}</td>
                 <td className="border px-4 py-2">
                   <Link className="text-blue-600" href={`/admin/employees/${e.id}`}>
                     {e.name}
