@@ -1,0 +1,80 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { prisma } from '@/lib/prisma';
+import jwt from 'jsonwebtoken';
+
+const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-change-me';
+
+function getRole(req: NextRequest): string | null {
+  const auth = req.headers.get('authorization') || '';
+  const token = auth.startsWith('Bearer ') ? auth.slice(7) : null;
+  if (!token) return null;
+  try {
+    const d: any = jwt.verify(token, JWT_SECRET);
+    return d?.role || null;
+  } catch {
+    return null;
+  }
+}
+
+function isHR(role: string | null) {
+  if (!role) return false;
+  const r = role.toUpperCase();
+  return r === 'ADMIN' || r === 'OWNER' || r === 'HR_MANAGER' || r === 'HR';
+}
+
+export async function GET(req: NextRequest) {
+  const role = getRole(req);
+  if (!isHR(role)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+
+  // Fetch employees with leave balance and latest salary
+  const employees = await prisma.employee.findMany({
+    include: {
+      salaries: { orderBy: { effectiveFrom: 'desc' }, take: 1 },
+    },
+  });
+
+  const empIds = employees.map((e) => e.id);
+
+  // Approved leaves this year
+  const yearStart = new Date(new Date().getFullYear(), 0, 1);
+  const approvedLeaves = await prisma.leaveRequest.findMany({
+    where: {
+      employeeId: { in: empIds },
+      status: 'APPROVED',
+      startDate: { gte: yearStart },
+    },
+  });
+
+  const leaveStats: Record<number, { annual: number; unpaid: number }> = {};
+  for (const l of approvedLeaves) {
+    const days = Math.ceil((l.endDate.getTime() - l.startDate.getTime()) / 86400000) + 1;
+    if (!leaveStats[l.employeeId]) leaveStats[l.employeeId] = { annual: 0, unpaid: 0 };
+    if (l.type === 'ANNUAL') leaveStats[l.employeeId].annual += days;
+    if (l.type === 'UNPAID') leaveStats[l.employeeId].unpaid += days;
+  }
+
+  // Penalties totals
+  const penalties = await prisma.penalty.groupBy({
+    by: ['employeeId'],
+    _sum: { amount: true },
+    where: { employeeId: { in: empIds } },
+  });
+  const penaltyMap = Object.fromEntries(penalties.map((p) => [p.employeeId, Number(p._sum.amount) || 0]));
+
+  const report = employees.map((e) => {
+    const latestSalary = e.salaries[0];
+    const leaves = leaveStats[e.id] || { annual: 0, unpaid: 0 };
+    return {
+      id: e.id,
+      name: e.name,
+      leaveBalance: e.leaveBalanceDays ?? 0,
+      latestSalary: latestSalary ? Number(latestSalary.amount) : 0,
+      salaryCurrency: latestSalary ? latestSalary.currency : 'USD',
+      annualConsumed: leaves.annual,
+      unpaidDays: leaves.unpaid,
+      penaltiesTotal: penaltyMap[e.id] || 0,
+    };
+  });
+
+  return NextResponse.json(report);
+}
