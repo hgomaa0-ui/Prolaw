@@ -109,7 +109,7 @@ export default function AttendancePage() {
           <button onClick={async()=>{
             if(!form.employeeId||!form.clockIn){alert('Select employee and clock in');return;}
             const body={ employeeId:Number(form.employeeId), clockIn: new Date(form.clockIn).toISOString(), ...(form.clockOut?{clockOut:new Date(form.clockOut).toISOString()}:{} )};
-            const res=await fetch('/api/attendance',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+            const res=await fetch('/api/attendance',{method:'POST',headers:{'Content-Type':'application/json', ...(token?{Authorization:`Bearer ${token}`}:{})},body:JSON.stringify(body)});
             if(res.ok){setForm({employeeId:'',clockIn:'',clockOut:''});fetchData();}else{alert(await res.text());}
           }} className="rounded bg-green-600 px-4 py-2 text-white">Save</button>
         </div>
