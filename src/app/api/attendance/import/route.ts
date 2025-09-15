@@ -1,12 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { withCompany } from '@/lib/with-company';
 import { prisma } from '@/lib/prisma';
 
 /*
   POST /api/attendance/import
   Body: raw text CSV (EmployeeId,ClockIn,ClockOut) OR multipart file field "file"
 */
-export const POST = withCompany(async (req: NextRequest, companyId?: number) => {
+export async function POST(req: NextRequest){
   const contentType=req.headers.get('content-type')||'';
   let csv='';
   if(contentType.startsWith('text/csv')){
@@ -40,4 +39,4 @@ export const POST = withCompany(async (req: NextRequest, companyId?: number) => 
   if(!creates.length) return NextResponse.json({error:'no valid rows'},{status:400});
   await prisma.attendance.createMany({ data: creates });
   return NextResponse.json({ ok:true, inserted: creates.length });
-});
+}
