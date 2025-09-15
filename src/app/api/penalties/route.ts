@@ -53,19 +53,27 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   const user = getUser(req);
   if (!user || !isHR(user.role)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-  const { employeeId, amount, currency = 'USD', reason, date } = await req.json();
-  if (!employeeId || !amount) {
-    return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+  const { employeeId, amount, days, currency: curInput='USD', reason, date } = await req.json();
+  if (!employeeId) return NextResponse.json({ error:'employeeId required'},{status:400});
+
+  let amt:number|undefined = amount;
+  let curr = curInput;
+  if(amt===undefined && days!==undefined){
+    const latest = await prisma.salary.findFirst({ where:{ employeeId:Number(employeeId) }, orderBy:{ effectiveFrom:'desc' } });
+    if(!latest) return NextResponse.json({ error:'No salary found to derive amount'},{status:400});
+    curr = latest.currency;
+    amt = (Number(latest.amount)/30*Number(days));
   }
+  if(amt===undefined) return NextResponse.json({ error:'amount or days required'},{status:400});
   const penalty = await prisma.penalty.create({
-    data: {
-      employeeId: Number(employeeId),
-      amount,
-      currency,
-      reason,
-      date: date ? new Date(date) : new Date(),
-      createdById: user.id ? Number(user.id) : user.sub ? Number(user.sub) : undefined,
-    },
+    data:{
+      employeeId:Number(employeeId),
+      amount: Number(amt.toFixed(2)),
+      currency: curr,
+      reason: reason ?? (days?`UNPAID_LEAVE ${days} days`:null),
+      date: date? new Date(date): new Date(),
+      createdById: user.id? Number(user.id): user.sub? Number(user.sub): undefined,
+    }
   });
   return NextResponse.json(penalty, { status: 201 });
 }

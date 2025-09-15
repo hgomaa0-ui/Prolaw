@@ -28,6 +28,7 @@ export default function PenaltiesPage() {
   // add form
   const [employeeId, setEmployeeId] = useState<string>("");
   const [amount, setAmount] = useState<string>("");
+  const [days,setDays]=useState<string>("");
   const [currency, setCurrency] = useState<CurrencyCode>("USD" as CurrencyCode);
   const [reason, setReason] = useState<string>("");
 
@@ -47,16 +48,20 @@ export default function PenaltiesPage() {
   }, []);
 
   async function addPenalty() {
-    if (!employeeId || !amount) return toast.error("All fields required");
+    if (!employeeId || (!amount && !days)) return toast.error("حدد المبلغ أو الأيام");
+    const body:any = { employeeId: Number(employeeId), currency, reason };
+    if(amount) body.amount = parseFloat(amount);
+    if(days) body.days = parseFloat(days);
     const res = await fetchAuth("/api/penalties", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ employeeId: Number(employeeId), amount: parseFloat(amount), currency, reason }),
+      body: JSON.stringify(body),
     });
     if (!res.ok) return toast.error("Failed");
     toast.success("Penalty added");
     setEmployeeId("");
     setAmount("");
+    setDays("");
     setReason("");
     fetchData();
   }
@@ -84,7 +89,11 @@ export default function PenaltiesPage() {
         </div>
         <div>
           <label className="block text-sm">Amount</label>
-          <input type="number" value={amount} onChange={(e)=>setAmount(e.target.value)} className="border rounded px-2 py-1 w-28" />
+          <input type="number" value={amount} onChange={(e)=>setAmount(e.target.value)} className="border rounded px-2 py-1 w-28" placeholder="auto" />
+        </div>
+        <div>
+          <label className="block text-sm">Days</label>
+          <input type="number" value={days} onChange={(e)=>setDays(e.target.value)} className="border rounded px-2 py-1 w-24" placeholder="e.g 2" />
         </div>
         <div>
           <label className="block text-sm">Currency</label>
