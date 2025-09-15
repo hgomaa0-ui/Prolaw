@@ -67,7 +67,7 @@ export default function EmployeeDetailPage() {
   const [lawyers,setLawyers]=useState<{id:number;name:string}[]>([]);
   const [projectIds,setProjectIds]=useState<number[]>([]);
   const [lawyerIds,setLawyerIds]=useState<number[]>([]);
-  const isHR = roleEdit === "HR_MANAGER" || roleEdit === "HR";
+  const [isHR,setIsHR]=useState(false);
 
   const fetchEmp = async () => {
     // fetch employee details
@@ -125,6 +125,9 @@ export default function EmployeeDetailPage() {
       } catch {}
     };
     fetchPositions();
+    const tok=getAuth();
+    const dec:any = tok ? JSON.parse(atob(tok.split('.')[1])):{};
+    setIsHR(dec.role==='ADMIN'||dec.role==='HR_MANAGER'||dec.role==='OWNER');
   }, [id]);
 
   const handleUpdateEmail = async (e: React.FormEvent) => {
