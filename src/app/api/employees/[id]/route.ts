@@ -47,9 +47,9 @@ export async function PUT(req: NextRequest, context: Promise<{ params: { id: str
   const role = getUserRole(req);
   if (!isHR(role)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   const id = Number(params.id);
-  const { name, email, status, department, hireDate, positionId, role: newRole, salaryAmount, salaryCurrency, salaryStart, projectIds = undefined, lawyerIds = undefined } = await req.json();
+  const { name, email, status, department, hireDate, leaveBalanceDays, positionId, role: newRole, salaryAmount, salaryCurrency, salaryStart, projectIds = undefined, lawyerIds = undefined } = await req.json();
 
-  const updates: any = { name, email, status, department, hireDate: hireDate ? new Date(hireDate) : undefined };
+  const updates: any = { name, email, status, department, hireDate: hireDate ? new Date(hireDate) : undefined, ...(leaveBalanceDays!==undefined ? { leaveBalanceDays: Number(leaveBalanceDays) } : {}) };
   const tx = await prisma.$transaction(async (tx) => {
     const employee = await tx.employee.update({ where: { id }, data: updates });
     if (salaryAmount) {
