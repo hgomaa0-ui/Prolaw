@@ -18,7 +18,7 @@ function decode(req: NextRequest): Decoded | null {
 }
 
 function isHR(role: string | null) {
-  return role === 'ADMIN' || role === 'HR_MANAGER';
+  return role === 'ADMIN' || role === 'HR_MANAGER' || role === 'OWNER';
 }
 
 // GET /api/attendance?from=&to=&employeeId=
@@ -54,8 +54,8 @@ export async function POST(req: NextRequest) {
   const targetEmpId = employeeId || user.employeeId;
   if (!targetEmpId) return NextResponse.json({ error: 'employeeId required' }, { status: 400 });
 
-  // if HR provides clockIn create manual record directly
-  if (isHR(user.role) && clockIn) {
+  // manual add if clockIn provided
+  if (clockIn) {
     const rec = await prisma.attendance.create({ data: { employeeId: targetEmpId, clockIn: new Date(clockIn), ...(clockOut?{clockOut:new Date(clockOut)}:{}) } });
     return NextResponse.json(rec, { status: 201 });
   }
