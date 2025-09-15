@@ -24,7 +24,16 @@ export const GET = withCompany(async (req: NextRequest, companyId?: number) => {
     ['Employee', 'ClockIn', 'ClockOut'],
     ...records.map((r) => [r.employee.name, r.clockIn.toISOString(), r.clockOut ? r.clockOut.toISOString() : '']),
   ];
-  const csv = rows.map((row) => row.map((field) => `"${field.replace(/"/g, '""')}` ).join(',')).join('\n');
+  const csv = rows
+    .map((row) =>
+      row
+        .map((field) => {
+          const str = String(field ?? '');
+          return `"${str.replace(/"/g, '""')}"`;
+        })
+        .join(',')
+    )
+    .join('\n');
 
   return new NextResponse(csv, {
     headers: {
