@@ -63,6 +63,21 @@ export default function AttendancePage() {
           <input type="date" value={filter.to} onChange={(e)=>setFilter({...filter,to:e.target.value})} className="rounded border px-3 py-2" />
         </div>
         <button onClick={fetchData} className="rounded bg-gray-600 px-4 py-2 text-white">Apply</button>
+        <button onClick={()=>{
+            const q=`from=${filter.from}&to=${filter.to}`;
+            window.location.href=`/api/attendance/export?${q}`;
+        }} className="rounded bg-blue-600 px-4 py-2 text-white">Export CSV</button>
+        <label className="inline-flex items-center gap-2 cursor-pointer text-white bg-green-600 px-4 py-2 rounded">
+          Import CSV
+          <input type="file" accept=".csv" className="hidden" onChange={async(e)=>{
+            const file=e.target.files?.[0];
+            if(!file) return;
+            const fd=new FormData();fd.append('file',file);
+            const res=await fetch('/api/attendance/import',{method:'POST',body:fd});
+            if(res.ok){alert('Imported');fetchData();}else{alert(await res.text());}
+            e.target.value='';
+          }} />
+        </label>
         <div className="ml-auto text-sm font-medium">Total Hours: {totalHours.toFixed(2)}</div>
       </div>
 
