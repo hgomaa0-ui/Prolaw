@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { withCompany } from '@/lib/with-company';
 import { prisma } from '@/lib/prisma';
 
-export const GET = withCompany(async (req: NextRequest, companyId?: number) => {
+export async function GET(req: NextRequest) {
   const from = req.nextUrl.searchParams.get('from');
   const to = req.nextUrl.searchParams.get('to');
 
@@ -42,4 +41,4 @@ export const GET = withCompany(async (req: NextRequest, companyId?: number) => {
       'Content-Disposition': 'attachment; filename="attendance.csv"',
     },
   });
-});
+}

@@ -48,10 +48,18 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   const user = decode(req);
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  const { employeeId } = await req.json();
+  const body = await req.json();
+  const { employeeId, clockIn, clockOut } = body;
   const targetEmpId = employeeId || user.employeeId;
   if (!targetEmpId) return NextResponse.json({ error: 'employeeId required' }, { status: 400 });
-  // verify no open record
+
+  // if HR provides clockIn create manual record directly
+  if (isHR(user.role) && clockIn) {
+    const rec = await prisma.attendance.create({ data: { employeeId: targetEmpId, clockIn: new Date(clockIn), ...(clockOut?{clockOut:new Date(clockOut)}:{}) } });
+    return NextResponse.json(rec, { status: 201 });
+  }
+
+  // normal clock-in flow
   const open = await prisma.attendance.findFirst({ where: { employeeId: targetEmpId, clockOut: null } });
   if (open) return NextResponse.json({ error: 'Already clocked in' }, { status: 400 });
   const rec = await prisma.attendance.create({ data: { employeeId: targetEmpId } });

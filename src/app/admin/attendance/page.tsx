@@ -15,6 +15,8 @@ export default function AttendancePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState({ from: "", to: "" });
+  const [empOptions, setEmpOptions] = useState<{id:number,name:string}[]>([]);
+  const [form, setForm] = useState({ employeeId: '', clockIn: '', clockOut: '' });
 
   const token = getAuth();
 
@@ -34,6 +36,10 @@ export default function AttendancePage() {
 
   useEffect(() => {
     fetchData();
+    // fetch employees list
+    fetch('/api/employees')
+      .then(r=>r.json()).then((arr)=> setEmpOptions(arr.map((e:any)=>({id:e.id,name:e.name}))))
+      .catch(()=>{});
   }, []);
 
   const hoursDiff = (start: string, end?: string) => {
@@ -79,6 +85,34 @@ export default function AttendancePage() {
           }} />
         </label>
         <div className="ml-auto text-sm font-medium">Total Hours: {totalHours.toFixed(2)}</div>
+      </div>
+
+      {/* Add Record form */}
+      <div className="border p-4 rounded mb-6 space-y-3 bg-gray-50">
+        <h2 className="font-medium">Add Record (manual)</h2>
+        <div className="flex flex-wrap items-end gap-4">
+          <div>
+            <label className="block text-sm">Employee</label>
+            <select value={form.employeeId} onChange={e=>setForm({...form,employeeId:e.target.value})} className="border rounded px-3 py-2">
+              <option value="">Select…</option>
+              {empOptions.map(o=> <option key={o.id} value={o.id}>{o.name} (#{o.id})</option>)}
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm">Clock In</label>
+            <input type="datetime-local" value={form.clockIn} onChange={e=>setForm({...form,clockIn:e.target.value})} className="border rounded px-3 py-2" />
+          </div>
+          <div>
+            <label className="block text-sm">Clock Out</label>
+            <input type="datetime-local" value={form.clockOut} onChange={e=>setForm({...form,clockOut:e.target.value})} className="border rounded px-3 py-2" />
+          </div>
+          <button onClick={async()=>{
+            if(!form.employeeId||!form.clockIn){alert('Select employee and clock in');return;}
+            const body={ employeeId:Number(form.employeeId), clockIn: new Date(form.clockIn).toISOString(), ...(form.clockOut?{clockOut:new Date(form.clockOut).toISOString()}:{} )};
+            const res=await fetch('/api/attendance',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+            if(res.ok){setForm({employeeId:'',clockIn:'',clockOut:''});fetchData();}else{alert(await res.text());}
+          }} className="rounded bg-green-600 px-4 py-2 text-white">Save</button>
+        </div>
       </div>
 
       {loading && <p>Loading…</p>}
