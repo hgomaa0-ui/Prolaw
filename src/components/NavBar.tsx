@@ -26,7 +26,6 @@ const links:NavLink[] = [
   { href: "/projects", label: "Projects", key:"projects" },
   { href: "/time", label: "Time Entries", key:"time" },
   { href: "/expenses", label: "Expenses", key:"expenses" },
-  { href: "/leaves", label: "Leaves", key:"leaves" },
   { href: "/invoices",  label: "Invoices", key:"invoices" },
   { href: "/admin/reports", label: "Reports", key:"reports" },
   { href: "/accounts", label: "Accounts", key:"accounts" },
