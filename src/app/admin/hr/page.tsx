@@ -15,6 +15,7 @@ export default function HRDashboard() {
         { href: "/admin/attendance", label: "Attendance" },
         { href: "/admin/penalties", label: "Penalties" },
         { href: "/admin/payroll", label: "Payroll" },
+        { href: "/admin/hr/report", label: "HR Report" },
       ]);
     }else if(role==="HR_MANAGER"){ 
       setTiles([
@@ -23,6 +24,7 @@ export default function HRDashboard() {
         { href: "/admin/attendance", label: "Attendance" },
                 { href: "/admin/penalties", label: "Penalties" },
         { href: "/admin/payroll", label: "Payroll" },
+        { href: "/admin/hr/report", label: "HR Report" },
       ]);
     }else{
       setTiles([
@@ -31,6 +33,7 @@ export default function HRDashboard() {
         { href: "/admin/attendance", label: "Attendance" },
                 { href: "/admin/penalties", label: "Penalties" },
         { href: "/admin/payroll", label: "Payroll" },
+        { href: "/admin/hr/report", label: "HR Report" },
       ]);
     }
   },[]);
