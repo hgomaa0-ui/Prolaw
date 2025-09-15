@@ -7,7 +7,6 @@ export const GET = withCompany(async (req: NextRequest, companyId?: number) => {
   const to = req.nextUrl.searchParams.get('to');
 
   const where: any = {};
-  if (companyId) where.employee = { is: { companyId } } as any;
   if (from) where.clockIn = { gte: new Date(from) };
   if (to) {
     where.clockIn = where.clockIn || {};
