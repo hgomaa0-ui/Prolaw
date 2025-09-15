@@ -36,8 +36,9 @@ export async function GET(req: NextRequest) {
   // employees can only see their own
   if (!isHR(user.role)) filters.AND.push({ employeeId: user.employeeId ?? 0 });
 
+  const whereCond = filters.AND.length? filters : {};
   const records = await prisma.attendance.findMany({
-    where: filters,
+    where: whereCond,
     include: { employee: { select: { name: true } } },
     orderBy: { clockIn: 'desc' },
   });
