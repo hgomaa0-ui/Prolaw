@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { withCompany } from '@/lib/with-company';
 import jwt from 'jsonwebtoken';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-change-me';
@@ -18,8 +19,31 @@ function auth(request: NextRequest) {
   }
 }
 
-// GET /api/banks?companyId=
-export async function GET(request: NextRequest) {
+// GET /api/banks
+export const GET = withCompany(async (request: NextRequest, companyId?: number) => {
+  if (!companyId) return NextResponse.json([]);
+  const rawBanks = await prisma.bankAccount.findMany({
+    where: { companyId },
+    orderBy: { name: 'asc' },
+    include: {
+      bankTransactions: { select: { amount: true } },
+      advancePayments: { select: { amount: true } },
+    },
+  });
+  const banks = rawBanks.map((b) => {
+    const sumTxns = b.bankTransactions.reduce((acc, t) => acc + Number(t.amount), 0);
+    const sumAdv = b.advancePayments.reduce((acc, a) => acc + Number(a.amount), 0);
+    const derived = sumTxns + sumAdv;
+    return {
+      id: b.id,
+      name: b.name,
+      currency: b.currency,
+      balance: Number(b.balance),
+      derived,
+    };
+  });
+  return NextResponse.json(banks);
+});
   const { userId } = auth(request);
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   const { searchParams } = new URL(request.url);
@@ -47,7 +71,7 @@ export async function GET(request: NextRequest) {
     };
   });
   return NextResponse.json(banks);
-}
+});
 
 // POST /api/banks { companyId, name, currency }
 export async function POST(request: NextRequest) {
