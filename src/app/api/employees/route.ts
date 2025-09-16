@@ -58,7 +58,7 @@ export async function POST(req: NextRequest) {
   
   if (!isHR(userRole)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
-  const { name, email, password, positionId, role: newRole = 'LAWYER', status = 'ACTIVE', department, hireDate, salaryAmount, salaryCurrency = 'USD', salaryStart, projectIds = [], lawyerIds = [] } = await req.json();
+  const { name, email, password, positionId, role: newRole = 'LAWYER', status = 'ACTIVE', department, hireDate, salaryAmount, salaryCurrency = 'USD', salaryStart, leaveBalanceDays, projectIds = [], lawyerIds = [] } = await req.json();
   if (!name || !email || !salaryAmount) {
     return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
   }
@@ -91,6 +91,7 @@ export async function POST(req: NextRequest) {
       department,
       hireDate: hireDate ? new Date(hireDate) : undefined,
       userId,
+      leaveBalanceDays: leaveBalanceDays !== undefined ? Number(leaveBalanceDays) : undefined,
       salaries: {
         create: {
           amount: salaryAmount.toString(),

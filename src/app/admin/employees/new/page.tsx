@@ -13,6 +13,7 @@ export default function NewEmployeePage() {
     status: "ACTIVE",
     salaryAmount: "",
     salaryCurrency: "USD",
+    leaveBalanceDays: "",
     positionId: "",
     role: "LAWYER",
     password: "",
@@ -40,7 +41,9 @@ export default function NewEmployeePage() {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    if(name === 'projectIds' || name==='lawyerIds'){
+    if(name==='leaveBalanceDays'){
+      setForm({...form, leaveBalanceDays:value});
+    }else if(name === 'projectIds' || name==='lawyerIds'){
       const options = Array.from((e.target as HTMLSelectElement).selectedOptions).map(o=>Number(o.value));
       setForm(prev=>({ ...prev, [name]: options }));
     }else{
@@ -60,7 +63,7 @@ export default function NewEmployeePage() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(form),
+        body: JSON.stringify({ ...form, leaveBalanceDays: form.leaveBalanceDays? Number(form.leaveBalanceDays): undefined }),
       });
       if (!res.ok) throw new Error(await res.text());
       window.location.href = "/admin/employees";
@@ -140,6 +143,10 @@ export default function NewEmployeePage() {
             onChange={handleChange}
             required
           />
+        </div>
+        <div>
+          <label className="block">Leave Balance (days)</label>
+          <input type="number" step="0.1" name="leaveBalanceDays" value={form.leaveBalanceDays} onChange={handleChange} className="w-full rounded border px-3 py-2" />
         </div>
         <div>
           <label className="block">Currency</label>
