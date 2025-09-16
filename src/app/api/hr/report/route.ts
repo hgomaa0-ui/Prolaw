@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { withCompany } from '@/lib/with-company';
 import jwt from 'jsonwebtoken';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-change-me';
@@ -22,12 +23,13 @@ function isHR(role: string | null) {
   return r === 'ADMIN' || r === 'OWNER' || r === 'HR_MANAGER' || r === 'HR';
 }
 
-export async function GET(req: NextRequest) {
+export const GET = withCompany(async (req: NextRequest, companyId?: number) => {
   const role = getRole(req);
   if (!isHR(role)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
   // Fetch employees with leave balance and latest salary
   const employees = await prisma.employee.findMany({
+    where: companyId? { companyId } : undefined,
     include: {
       salaries: { orderBy: { effectiveFrom: 'desc' }, take: 1 },
     },
@@ -77,4 +79,4 @@ export async function GET(req: NextRequest) {
   });
 
   return NextResponse.json(report);
-}
+});
