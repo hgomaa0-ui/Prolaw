@@ -4,6 +4,7 @@ import React,{useState,useEffect} from "react";
 import { getAuth } from "@/lib/auth";
 
 interface Row{
+  seq:number;
   id:number;
   name:string;
   leaveBalance:number;
@@ -32,8 +33,8 @@ export default function HRReportPage(){
   },[]);
 
   const exportCSV=()=>{
-    const rows=[['ID','Name','Latest Salary','Currency','Leave Balance','Annual Used','Unpaid Days','Penalties']].concat(
-      data.map(r=>[r.id,r.name,r.latestSalary,r.salaryCurrency,r.leaveBalance,r.annualConsumed,r.unpaidDays,r.penaltiesTotal])
+    const rows=[["#","Name","Latest Salary","Currency","Leave Balance","Annual Used","Unpaid Days","Penalties"]].concat(
+      data.map(r=>[r.seq,r.name,r.latestSalary,r.salaryCurrency,r.leaveBalance,r.annualConsumed,r.unpaidDays,r.penaltiesTotal])
     );
     const csv=rows.map(row=>row.map(f=>`"${String(f).replace(/"/g,'""')}"`).join(',')).join('\n');
     const blob=new Blob([csv],{type:'text/csv'});
@@ -55,6 +56,7 @@ export default function HRReportPage(){
         <table className="min-w-full text-sm">
           <thead className="bg-gray-100 text-left">
             <tr>
+              <th className="border px-3 py-2">#</th>
               <th className="border px-3 py-2">Employee</th>
               <th className="border px-3 py-2">Salary</th>
               <th className="border px-3 py-2">Leave Balance</th>
@@ -66,6 +68,7 @@ export default function HRReportPage(){
           <tbody>
             {data.map(r=> (
               <tr key={r.id} className="hover:bg-gray-50">
+                <td className="border px-3 py-2">{r.seq}</td>
                 <td className="border px-3 py-2">{r.name}</td>
                 <td className="border px-3 py-2">{r.latestSalary.toFixed(2)} {r.salaryCurrency}</td>
                 <td className="border px-3 py-2">{r.leaveBalance}</td>

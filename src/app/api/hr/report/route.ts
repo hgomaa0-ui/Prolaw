@@ -63,10 +63,11 @@ export const GET = withCompany(async (req: NextRequest, companyId?: number) => {
   });
   const penaltyMap = Object.fromEntries(penalties.map((p) => [p.employeeId, Number(p._sum.amount) || 0]));
 
-  const report = employees.map((e) => {
+  const report = employees.sort((a,b)=>a.id-b.id).map((e,idx) => {
     const latestSalary = e.salaries[0];
     const leaves = leaveStats[e.id] || { annual: 0, unpaid: 0 };
     return {
+      seq: idx+1,
       id: e.id,
       name: e.name,
       leaveBalance: e.leaveBalanceDays ?? 0,
