@@ -44,34 +44,6 @@ export const GET = withCompany(async (request: NextRequest, companyId?: number) 
   });
   return NextResponse.json(banks);
 });
-  const { userId } = auth(request);
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  const { searchParams } = new URL(request.url);
-  const companyId = searchParams.get('companyId');
-  const where: any = {};
-  if (companyId) where.companyId = Number(companyId);
-  const rawBanks = await prisma.bankAccount.findMany({
-    where,
-    orderBy: { name: 'asc' },
-    include: {
-      bankTransactions: { select: { amount: true } },
-      advancePayments: { select: { amount: true } },
-    },
-  });
-  const banks = rawBanks.map((b) => {
-    const sumTxns = b.bankTransactions.reduce((acc, t) => acc + Number(t.amount), 0);
-    const sumAdv = b.advancePayments.reduce((acc, a) => acc + Number(a.amount), 0);
-    const derived = sumTxns + sumAdv;
-    return {
-      id: b.id,
-      name: b.name,
-      currency: b.currency,
-      balance: Number(b.balance),
-      derived,
-    };
-  });
-  return NextResponse.json(banks);
-});
 
 // POST /api/banks { companyId, name, currency }
 export async function POST(request: NextRequest) {
