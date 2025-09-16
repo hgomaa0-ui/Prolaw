@@ -29,11 +29,22 @@ export const GET = withCompany(async (req: NextRequest, companyId?: number) => {
 
   // Fetch employees with leave balance and latest salary
   const employees = await prisma.employee.findMany({
-    where: companyId ? { user: { companyId } } : undefined,
+    where: companyId ? { OR:[ { user:{ companyId } }, { user:{ companyId: null } } ] } : undefined,
     include: {
       salaries: { orderBy: { effectiveFrom: 'desc' }, take: 1 },
+      user:{ select:{ id:true, companyId:true }}
     },
   });
+
+  // assign missing companyId
+  if(companyId){
+    const missing = employees.filter(e=>!e.user?.companyId).map(e=>e.user?.id).filter(Boolean) as number[];
+    if(missing.length){
+      await prisma.user.updateMany({ where:{ id:{ in: missing } }, data:{ companyId } });
+      // refresh employees list
+      employees.forEach(e=>{ if(!e.user?.companyId) (e as any).user.companyId = companyId; });
+    }
+  }
 
   const empIds = employees.map((e) => e.id);
 
