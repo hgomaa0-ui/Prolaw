@@ -29,7 +29,7 @@ export const GET = withCompany(async (req: NextRequest, companyId?: number) => {
 
   // Fetch employees with leave balance and latest salary
   const employees = await prisma.employee.findMany({
-    where: companyId? { companyId } : undefined,
+    where: companyId? { user: { companyId } } : undefined,
     include: {
       salaries: { orderBy: { effectiveFrom: 'desc' }, take: 1 },
     },
@@ -44,7 +44,9 @@ export const GET = withCompany(async (req: NextRequest, companyId?: number) => {
       employeeId: { in: empIds },
       status: 'APPROVED',
       startDate: { gte: yearStart },
+      ...(companyId? { employee: { user: { companyId } } }: {}),
     },
+    include:{ employee:true }
   });
 
   const leaveStats: Record<number, { annual: number; unpaid: number }> = {};
