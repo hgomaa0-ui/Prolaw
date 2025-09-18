@@ -24,12 +24,27 @@ function isHR(role: string | null) {
 }
 
 export const GET = withCompany(async (req: NextRequest, companyId?: number) => {
+  // derive companyId if still undefined
+  if(!companyId){
+    const auth = req.headers.get('authorization')||'';
+    const token = auth.startsWith('Bearer ')? auth.slice(7):null;
+    if(token){
+      try{
+        const payload:any = JSON.parse(Buffer.from(token.split('.')[1],'base64').toString());
+        const uid = Number(payload.sub ?? payload.id);
+        if(uid){
+          const u = await prisma.user.findUnique({ where:{ id: uid }, select:{ companyId:true }});
+          companyId = u?.companyId ?? undefined;
+        }
+      }catch{}
+    }
+  }
   const role = getRole(req);
   if (!isHR(role)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
   // Fetch employees with leave balance and latest salary
   const employees = await prisma.employee.findMany({
-    where: companyId ? { OR:[ { user:{ companyId } }, { companyId }, { user:{ companyId: null } } ] } : undefined,
+    where: companyId ? { OR:[ { user:{ companyId } }, { user:{ companyId: null } } ] } : undefined,
     include: {
       salaries: { orderBy: { effectiveFrom: 'desc' }, take: 1 },
       user:{ select:{ id:true, companyId:true }}
@@ -38,11 +53,13 @@ export const GET = withCompany(async (req: NextRequest, companyId?: number) => {
 
   // assign missing companyId
   if(companyId){
-    const missing = employees.filter(e=>!e.user?.companyId).map(e=>e.user?.id).filter(Boolean) as number[];
-    if(missing.length){
-      await prisma.user.updateMany({ where:{ id:{ in: missing } }, data:{ companyId } });
-      // refresh employees list
-      employees.forEach(e=>{ if(!e.user?.companyId) (e as any).user.companyId = companyId; });
+    const missingUserIds = employees.filter(e=>!e.user?.companyId).map(e=>e.user?.id).filter(Boolean) as number[];
+    if(missingUserIds.length){
+      await prisma.user.updateMany({ where:{ id:{ in: missingUserIds } }, data:{ companyId } });
+    }
+    const missingEmpIds = employees.filter(e=>!e.companyId).map(e=>e.id);
+    if(missingEmpIds.length){
+      await prisma.employee.updateMany({ where:{ id:{ in: missingEmpIds } }, data:{ companyId } });
     }
   }
 
