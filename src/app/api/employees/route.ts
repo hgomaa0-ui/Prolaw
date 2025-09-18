@@ -54,7 +54,23 @@ export async function GET(req: NextRequest) {
 // POST /api/employees
 // -----------------------------------------------------------------------------
 export async function POST(req: NextRequest) {
-  const { role: userRole, companyId } = getAuth(req);
+  const { role: userRole, companyId: tokenCompanyId } = getAuth(req);
+  let companyId = tokenCompanyId;
+  // fallback: derive from requester user record
+  if(!companyId){
+    const authHeader = req.headers.get('authorization') || '';
+    const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
+    if(token){
+      try{
+        const payload:any = JSON.parse(Buffer.from(token.split('.')[1],'base64').toString());
+        const requesterId = Number(payload.sub ?? payload.id);
+        if(requesterId){
+          const u = await prisma.user.findUnique({ where:{ id: requesterId }, select:{ companyId:true } });
+          companyId = u?.companyId ?? undefined;
+        }
+      }catch{}
+    }
+  }
   
   if (!isHR(userRole)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
@@ -67,6 +83,10 @@ export async function POST(req: NextRequest) {
   let userId: number;
   let existingEmployee: any = null;
   if (existingUser) {
+    // ensure user.companyId set
+    if(!existingUser.companyId && companyId){
+      await prisma.user.update({ where:{ id: existingUser.id }, data:{ companyId } });
+    }
     userId = existingUser.id;
     // update role if changed
     if (existingUser.role !== newRole) {
