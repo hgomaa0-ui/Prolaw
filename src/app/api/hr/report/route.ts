@@ -42,24 +42,21 @@ export const GET = withCompany(async (req: NextRequest, companyId?: number) => {
   const role = getRole(req);
   if (!isHR(role)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
-  // Fetch employees with leave balance and latest salary
-  const employees = await prisma.employee.findMany({
-    where: companyId ? { OR:[ { user:{ companyId } }, { user:{ companyId: null } } ] } : undefined,
-    include: {
-      salaries: { orderBy: { effectiveFrom: 'desc' }, take: 1 },
+  // Fetch all employees with salaries and user linkage
+  const allEmps = await prisma.employee.findMany({
+    include:{
+      salaries:{ orderBy:{ effectiveFrom:'desc'}, take:1 },
       user:{ select:{ id:true, companyId:true }}
-    },
+    }
   });
+  // Filter by companyId if present
+  const employees = companyId ? allEmps.filter(e=> (e.user?.companyId ?? companyId) === companyId) : allEmps;
 
   // assign missing companyId
   if(companyId){
     const missingUserIds = employees.filter(e=>!e.user?.companyId).map(e=>e.user?.id).filter(Boolean) as number[];
     if(missingUserIds.length){
       await prisma.user.updateMany({ where:{ id:{ in: missingUserIds } }, data:{ companyId } });
-    }
-    const missingEmpIds = employees.filter(e=>!e.companyId).map(e=>e.id);
-    if(missingEmpIds.length){
-      await prisma.employee.updateMany({ where:{ id:{ in: missingEmpIds } }, data:{ companyId } });
     }
   }
 
