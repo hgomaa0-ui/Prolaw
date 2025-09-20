@@ -48,13 +48,33 @@ export default function EmployeesPage() {
       <h1 className="mb-6 text-3xl font-bold">Employees</h1>
       {loading && <p>Loading…</p>}
       {error && <p className="text-red-600">{error}</p>}
-      <div className="mb-4">
+      <div className="mb-4 flex gap-3">
         <Link
           href="/admin/employees/new"
           className="rounded bg-blue-600 px-4 py-2 text-white"
         >
           Add Employee
         </Link>
+        <button
+          onClick={() => {
+            const rows = [
+              ["ID","Name","Email","Department","Status","Leave Balance","Salary","Currency"]
+            ].concat(
+              data.map(e=>{
+                const latest=e.salaries[0];
+                return [e.id,e.name,e.email??"",e.department??"",e.status,e.leaveBalanceDays??0,latest?latest.amount:"",latest?latest.currency:""];
+              })
+            );
+            const csv = rows.map(r=>r.map(f=>`"${String(f).replace(/"/g,'""')}"`).join(',')).join('\n');
+            const blob = new Blob([csv],{type:'text/csv'});
+            const url = URL.createObjectURL(blob);
+            const a=document.createElement('a');
+            a.href=url; a.download='employees.csv'; a.click(); URL.revokeObjectURL(url);
+          }}
+          className="rounded bg-green-600 px-4 py-2 text-white"
+        >
+          Export CSV
+        </button>
       </div>
       <table className="min-w-full border-collapse">
         <thead>
