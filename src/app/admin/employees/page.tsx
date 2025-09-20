@@ -17,6 +17,7 @@ interface Employee {
   hireDate?: string;
   leaveBalanceDays?: number;
   salaries: Salary[];
+  user?: { role: string };
 }
 
 export default function EmployeesPage() {
@@ -58,11 +59,11 @@ export default function EmployeesPage() {
         <button
           onClick={() => {
             const rows = [
-              ["ID","Name","Email","Department","Status","Leave Balance","Salary","Currency"]
+              ["ID","Name","Email","Department","Status","Role","Leave Balance","Salary","Currency"]
             ].concat(
               data.map(e=>{
                 const latest=e.salaries[0];
-                return [e.id,e.name,e.email??"",e.department??"",e.status,e.leaveBalanceDays??0,latest?latest.amount:"",latest?latest.currency:""];
+                return [e.id,e.name,e.email??"",e.department??"",e.status,e.user?.role??"",e.leaveBalanceDays??0,latest?latest.amount:"",latest?latest.currency:""];
               })
             );
             const csv = rows.map(r=>r.map(f=>`"${String(f).replace(/"/g,'""')}"`).join(',')).join('\n');
@@ -84,6 +85,7 @@ export default function EmployeesPage() {
             <th className="border px-4 py-2">Email</th>
             <th className="border px-4 py-2">Department</th>
             <th className="border px-4 py-2">Status</th>
+            <th className="border px-4 py-2">Role</th>
             <th className="border px-4 py-2">Leave Balance</th>
             <th className="border px-4 py-2">Latest Salary</th>
             <th className="border px-4 py-2">Actions</th>
@@ -103,6 +105,7 @@ export default function EmployeesPage() {
                 <td className="border px-4 py-2">{e.email || "—"}</td>
                 <td className="border px-4 py-2">{e.department || "—"}</td>
                 <td className="border px-4 py-2">{e.status}</td>
+                <td className="border px-4 py-2">{e.user?.role ?? "—"}</td>
                 <td className="border px-4 py-2">
                   <input
                     type="number"

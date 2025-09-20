@@ -44,6 +44,7 @@ export async function GET(req: NextRequest) {
         orderBy: { effectiveFrom: 'desc' },
         take: 1,
       },
+      user:{ select:{ role:true }}
     },
     orderBy: { id: 'desc' },
   });
