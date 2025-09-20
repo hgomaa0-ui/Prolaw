@@ -49,8 +49,9 @@ export const GET = withCompany(async (req: NextRequest, companyId?: number) => {
       user:{ select:{ id:true, companyId:true }}
     }
   });
-  // Filter by companyId if present
-  const employees = companyId ? allEmps.filter(e=> (e.user?.companyId ?? companyId) === companyId) : allEmps;
+
+  // Filter by companyId in memory
+  const employees = companyId ? allEmps.filter(e=> e.user?.companyId === companyId) : allEmps;
 
   // assign missing companyId
   if(companyId){
