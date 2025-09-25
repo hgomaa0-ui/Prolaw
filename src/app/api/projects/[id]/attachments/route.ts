@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { writeFile, mkdir } from 'fs/promises';
-import path from 'path';
+import { put } from '@vercel/blob';
+import crypto from 'crypto';
 import crypto from 'crypto';
 import { prisma } from '@/lib/prisma';
 import jwt from 'jsonwebtoken';
@@ -54,15 +54,14 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     const type = ['POWER_OF_ATTORNEY', 'CONTRACT', 'OTHER'].includes(typeStr) ? typeStr : 'OTHER';
 
     const saved: any[] = [];
-    const baseDir = path.join(process.cwd(), 'public', 'uploads', 'project-attachments', String(projectId));
-    await mkdir(baseDir, { recursive: true });
 
     for (const file of files) {
-      const ext = path.extname(file.name) || '.dat';
+      const extMatch = /\.[A-Za-z0-9]+$/.exec(file.name || '');
+      const ext = extMatch ? extMatch[0] : '.dat';
       const filename = `${crypto.randomBytes(8).toString('hex')}${ext}`;
       const arrayBuffer = await file.arrayBuffer();
-      await writeFile(path.join(baseDir, filename), Buffer.from(arrayBuffer));
-      const url = `/uploads/project-attachments/${projectId}/${filename}`;
+      // upload to Vercel Blob (public)
+      const { url } = await put(`attachments/${projectId}/${filename}`, new Uint8Array(arrayBuffer), { access:'public', addRandomSuffix:false });
       const record = await prisma.projectAttachment.create({ data: { projectId, type, url, uploadedById: user.id } });
       saved.push(record);
     }
