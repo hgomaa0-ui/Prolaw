@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { put } from '@vercel/blob';
 import crypto from 'crypto';
-import crypto from 'crypto';
 import { prisma } from '@/lib/prisma';
 import jwt from 'jsonwebtoken';
 
@@ -61,8 +60,8 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
       const filename = `${crypto.randomBytes(8).toString('hex')}${ext}`;
       const arrayBuffer = await file.arrayBuffer();
       // upload to Vercel Blob (public)
-      const { url } = await put(`attachments/${projectId}/${filename}`, new Uint8Array(arrayBuffer), { access:'public', addRandomSuffix:false });
-      const record = await prisma.projectAttachment.create({ data: { projectId, type, url, uploadedById: user.id } });
+      const { url } = await put(`attachments/${projectId}/${filename}`, arrayBuffer as ArrayBuffer, { access:'public', addRandomSuffix:false });
+      const record = await prisma.projectAttachment.create({ data: { projectId, type: type as any, url, uploadedById: user.id } });
       saved.push(record);
     }
     return NextResponse.json(saved, { status: 201 });
