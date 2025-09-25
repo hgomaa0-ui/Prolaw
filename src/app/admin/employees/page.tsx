@@ -24,8 +24,13 @@ export default function EmployeesPage() {
   const [data, setData] = useState<Employee[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [currentRole,setCurrentRole]=useState<string|null>(null);
 
   useEffect(() => {
+    const tokenLocal = typeof window!=='undefined'?localStorage.getItem('token'):null;
+    if(tokenLocal){
+      try{ setCurrentRole(JSON.parse(atob(tokenLocal.split('.')[1])).role);}catch{}
+    }
     const fetchData = async () => {
       try {
         const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
@@ -49,6 +54,7 @@ export default function EmployeesPage() {
       <h1 className="mb-6 text-3xl font-bold">Employees</h1>
       {loading && <p>Loading…</p>}
       {error && <p className="text-red-600">{error}</p>}
+      {currentRole!=='ADMIN_VIEWER' && (
       <div className="mb-4 flex gap-3">
         <Link
           href="/admin/employees/new"
@@ -77,6 +83,7 @@ export default function EmployeesPage() {
           Export CSV
         </button>
       </div>
+      )}
       <table className="min-w-full border-collapse">
         <thead>
           <tr className="bg-gray-100 text-left">
@@ -98,15 +105,20 @@ export default function EmployeesPage() {
               <tr key={e.id} className="hover:bg-gray-50">
                 <td className="border px-4 py-2">{e.id}</td>
                 <td className="border px-4 py-2">
-                  <Link className="text-blue-600" href={`/admin/employees/${e.id}`}>
-                    {e.name}
-                  </Link>
+                  {currentRole==='ADMIN_VIEWER'? (
+                    <span>{e.name}</span>
+                  ) : (
+                    <Link className="text-blue-600" href={`/admin/employees/${e.id}`}>{e.name}</Link>
+                  )}
                 </td>
                 <td className="border px-4 py-2">{e.email || "—"}</td>
                 <td className="border px-4 py-2">{e.department || "—"}</td>
                 <td className="border px-4 py-2">{e.status}</td>
                 <td className="border px-4 py-2">{e.user?.role ?? "—"}</td>
                 <td className="border px-4 py-2">
+                  {currentRole==='ADMIN_VIEWER'? (
+                    e.leaveBalanceDays??0
+                  ) : (
                   <input
                     type="number"
                     className="w-20 border rounded px-1 py-0.5"
@@ -135,6 +147,7 @@ export default function EmployeesPage() {
                   {latest ? `${latest.amount} ${latest.currency}` : "—"}
                 </td>
                 <td className="border px-4 py-2">
+                  {currentRole!=='ADMIN_VIEWER' && (
                   <button
                     onClick={async () => {
                       if (!confirm(`Delete ${e.name}?`)) return;
@@ -154,6 +167,7 @@ export default function EmployeesPage() {
                   >
                     Delete
                   </button>
+                  )
                 </td>
               </tr>
             );

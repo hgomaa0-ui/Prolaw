@@ -11,7 +11,7 @@ generator client {
 datasource db {
   provider   = "postgresql"
   url        = env("PRISMA_DATABASE_URL")  // proxy (Accelerate) فى وقت التشغيل
-  directUrl  = env("DATABASE_URL")          // اتصال مباشر للهجرات داخل Vercel build
+  directUrl  = env("POSTGRES_URL")          // اتصال مباشر للهجرات داخل Vercel build
 }
 
 // Company tenant entity
@@ -38,6 +38,7 @@ model Company {
 enum Role {
   OWNER // super user / firm owner
   ADMIN // full access
+  ADMIN_VIEWER // read-only admin access
   ACCOUNTANT_MASTER // invoices + trusts + reports
   ACCOUNTANT_ASSISTANT // invoices + approve expenses (no trusts/reports)
   LAWYER_PARTNER // see lawyer reports, enter time/expenses, approve lawyer time
