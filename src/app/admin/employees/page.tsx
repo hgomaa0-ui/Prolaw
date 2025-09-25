@@ -142,6 +142,7 @@ export default function EmployeesPage() {
                       }
                     }}
                   />
+                  )}
                 </td>
                 <td className="border px-4 py-2">
                   {latest ? `${latest.amount} ${latest.currency}` : "—"}
