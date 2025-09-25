@@ -26,7 +26,7 @@ function getUserRole(req: NextRequest){
 }
 
 function isHR(role: string | null) {
-  return role === 'ADMIN' || role === 'HR_MANAGER' || role === 'OWNER' || role === 'HR';
+  return role === 'ADMIN' || role === 'ADMIN_VIEWER' || role === 'HR_MANAGER' || role === 'OWNER' || role === 'HR';
 }
 
 // -----------------------------------------------------------------------------
