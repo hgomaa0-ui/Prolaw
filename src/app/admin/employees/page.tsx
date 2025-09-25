@@ -54,7 +54,7 @@ export default function EmployeesPage() {
       <h1 className="mb-6 text-3xl font-bold">Employees</h1>
       {loading && <p>Loading…</p>}
       {error && <p className="text-red-600">{error}</p>}
-      {currentRole!=='ADMIN_VIEWER' && (
+      {currentRole!=='ADMIN_VIEWER' ? (
       <div className="mb-4 flex gap-3">
         <Link
           href="/admin/employees/new"
@@ -83,7 +83,7 @@ export default function EmployeesPage() {
           Export CSV
         </button>
       </div>
-      )}
+      ) : null }
       <table className="min-w-full border-collapse">
         <thead>
           <tr className="bg-gray-100 text-left">
@@ -116,8 +116,8 @@ export default function EmployeesPage() {
                 <td className="border px-4 py-2">{e.status}</td>
                 <td className="border px-4 py-2">{e.user?.role ?? "—"}</td>
                 <td className="border px-4 py-2">
-                  {currentRole==='ADMIN_VIEWER'? (
-                    e.leaveBalanceDays??0
+                  {currentRole==='ADMIN_VIEWER' ? (
+                    <span>{e.leaveBalanceDays??0}</span>
                   ) : (
                   <input
                     type="number"
