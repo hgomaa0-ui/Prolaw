@@ -168,7 +168,7 @@ export default function EmployeesPage() {
                   >
                     Delete
                   </button>
-                  )
+                  )}
                 </td>
               </tr>
             );
