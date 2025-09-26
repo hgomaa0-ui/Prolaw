@@ -45,6 +45,7 @@ const ROLE_OPTIONS = [
   "HR_MANAGER",
   "HR",
   "ADMIN",
+  "ADMIN_REPORTS",
   "OWNER",
 ];
 

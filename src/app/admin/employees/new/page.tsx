@@ -208,6 +208,7 @@ export default function NewEmployeePage() {
               "ACCOUNTANT_ASSISTANT",
               "HR_MANAGER",
               "HR",
+              "ADMIN_REPORTS",
             ].map((r) => (
               <option key={r} value={r}>
                 {r}
