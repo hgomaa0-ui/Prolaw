@@ -58,6 +58,8 @@ export default function EmployeeDetailPage() {
   const [adding, setAdding] = useState(false);
   const [newSalary, setNewSalary] = useState({ amount: "", currency: "USD" });
   const [emailEdit, setEmailEdit] = useState<string>("");
+  const [deptEdit,setDeptEdit]=useState<string>("");
+  const [pwd,setPwd]=useState<string>("");
   const [statusEdit, setStatusEdit] = useState<string>("ACTIVE");
   const [balanceEdit, setBalanceEdit] = useState<number>(0);
   const [positions, setPositions] = useState<Position[]>([]);
@@ -82,6 +84,7 @@ export default function EmployeeDetailPage() {
       setProjectIds(data.projectIds ?? []);
       setLawyerIds(data.lawyerIds ?? []);
       setEmailEdit(data.email || "");
+      setDeptEdit(data.department||"");
       setStatusEdit(data.status);
       setBalanceEdit(Number(data.leaveBalanceDays||0));
     } catch (e: any) {
@@ -281,6 +284,21 @@ export default function EmployeeDetailPage() {
         <div>
           <strong>Hire Date:</strong> {emp.hireDate ? new Date(emp.hireDate).toLocaleDateString() : "—"}
         </div>
+        {/* Update department */}
+        <div className="mt-4">
+          <form onSubmit={async(e)=>{
+            e.preventDefault();setAdding(true);setError(null);
+            try{
+              const token=getAuth();
+              const res=await fetch(`/api/employees/${id}`,{method:'PUT',headers:{'Content-Type':'application/json',Authorization:`Bearer ${token}`},body:JSON.stringify({department:deptEdit})});
+              if(!res.ok) throw new Error(await res.text());
+              await fetchEmp();
+            }catch(err:any){setError(err.message);}finally{setAdding(false);}            
+          }} className="flex items-end gap-4">
+            <input className="rounded border px-3 py-2" value={deptEdit} onChange={(e)=>setDeptEdit(e.target.value)} />
+            <button disabled={adding} className="rounded bg-blue-600 px-4 py-2 text-white disabled:opacity-50">{adding?'Saving…':'Save Department'}</button>
+          </form>
+        </div>
         {/* Update status */}
         <div className="mt-4">
           <form onSubmit={handleUpdateStatus} className="flex items-end gap-4">
@@ -470,6 +488,23 @@ export default function EmployeeDetailPage() {
           <button disabled={adding} className="rounded bg-blue-600 px-4 py-2 text-white disabled:opacity-50">
             {adding ? "Saving…" : "Save Email"}
           </button>
+        </form>
+      </section>
+
+      {/* Password update */}
+      <section>
+        <h2 className="mb-2 text-xl font-semibold">Change Password</h2>
+        <form onSubmit={async(e)=>{e.preventDefault();if(!pwd)return;setAdding(true);setError(null);
+          try{
+            const token=getAuth();
+            const res=await fetch(`/api/employees/${id}`,{method:'PUT',headers:{'Content-Type':'application/json',Authorization:`Bearer ${token}`},body:JSON.stringify({password:pwd})});
+            if(!res.ok) throw new Error(await res.text());
+            setPwd("");
+            alert('Password updated');
+          }catch(err:any){setError(err.message);}finally{setAdding(false);}        
+        }} className="flex items-end gap-4">
+          <input type="password" required className="rounded border px-3 py-2" value={pwd} onChange={(e)=>setPwd(e.target.value)} placeholder="New password" />
+          <button disabled={adding} className="rounded bg-blue-600 px-4 py-2 text-white disabled:opacity-50">{adding?'Saving…':'Save Password'}</button>
         </form>
       </section>
     </div>

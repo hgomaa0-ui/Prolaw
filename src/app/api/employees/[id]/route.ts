@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import jwt from 'jsonwebtoken';
+import bcrypt from 'bcryptjs';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-change-me';
 
@@ -47,7 +48,7 @@ export async function PUT(req: NextRequest, context: Promise<{ params: { id: str
   const role = getUserRole(req);
   if (!isHR(role)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   const id = Number(params.id);
-  const { name, email, status, department, hireDate, leaveBalanceDays, positionId, role: newRole, salaryAmount, salaryCurrency, salaryStart, projectIds = undefined, lawyerIds = undefined } = await req.json();
+  const { name, email, status, department, password, hireDate, leaveBalanceDays, positionId, role: newRole, salaryAmount, salaryCurrency, salaryStart, projectIds = undefined, lawyerIds = undefined } = await req.json();
 
   const updates: any = { name, email, status, department, hireDate: hireDate ? new Date(hireDate) : undefined, ...(leaveBalanceDays!==undefined ? { leaveBalanceDays: Number(leaveBalanceDays) } : {}) };
   const tx = await prisma.$transaction(async (tx) => {
@@ -69,14 +70,15 @@ export async function PUT(req: NextRequest, context: Promise<{ params: { id: str
       }
     }
     // update user's position and/or role if provided
-    if (positionId !== undefined || newRole !== undefined) {
-      await tx.user.update({
-        where: { id: employee.userId },
-        data: {
-          ...(positionId !== undefined ? { positionId: positionId ? Number(positionId) : null } : {}),
-          ...(newRole !== undefined ? { role: newRole } : {}),
-        },
-      });
+    if (positionId !== undefined || newRole !== undefined || password !== undefined) {
+      const userData:any = {
+        ...(positionId !== undefined ? { positionId: positionId ? Number(positionId) : null } : {}),
+        ...(newRole !== undefined ? { role: newRole } : {}),
+      };
+      if(password!==undefined && password){
+        userData.passwordHash = await bcrypt.hash(password,10);
+      }
+      await tx.user.update({ where:{ id: employee.userId }, data: userData });
     }
       // project & lawyer assignments handling inside same transaction for consistency
       if(projectIds !== undefined){
