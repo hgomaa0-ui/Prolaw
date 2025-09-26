@@ -19,6 +19,7 @@ const ROLE_PAGES: Record<string,string[]> = {
   LAWYER_MANAGER:["time","expenses","reports","leaves","notifications","settings"],
   HR:["hr","payroll","leaves","notifications"],
   LAWYER:["time","expenses","leaves","notifications"],
+  ADMIN_REPORTS:["clients","projects","reports"],
 };
 
 const links:NavLink[] = [
