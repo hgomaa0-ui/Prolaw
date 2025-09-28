@@ -30,11 +30,18 @@ export async function POST(req: NextRequest){
     return NextResponse.json({error:'userId, projectId, amount, currency are required'},{status:400});
   }
 
-  // Ensure the user and project exist
-  const user = await prisma.user.findUnique({ where: { id: Number(userId) }, select: { id:true } });
+  // Company of the acting admin
+  const adminUser = await prisma.user.findUnique({ where: { id: Number(me.id) }, select: { companyId: true } });
+  const adminCompanyId = adminUser?.companyId ?? null;
+  if(!adminCompanyId) return NextResponse.json({error:'Admin company not found'},{status:400});
+
+  // Ensure the user and project exist within the same company
+  const user = await prisma.user.findUnique({ where: { id: Number(userId) }, select: { id:true, companyId:true } });
   if(!user) return NextResponse.json({error:'User not found'},{status:404});
-  const project = await prisma.project.findUnique({ where: { id: Number(projectId) }, select: { id:true } });
+  if(user.companyId !== adminCompanyId) return NextResponse.json({error:'User not in your company'},{status:403});
+  const project = await prisma.project.findUnique({ where: { id: Number(projectId) }, select: { id:true, client: { select: { companyId: true } } } });
   if(!project) return NextResponse.json({error:'Project not found'},{status:404});
+  if(project.client.companyId !== adminCompanyId) return NextResponse.json({error:'Project not in your company'},{status:403});
 
   const exp = await prisma.expense.create({
     data: {

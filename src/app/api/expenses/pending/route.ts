@@ -21,11 +21,20 @@ export async function GET(req: NextRequest) {
   try {
     const user = getUser(req);
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    if (!(user.role === 'OWNER' || user.role === 'ACCOUNTANT'))
+    // allow owner/admin/accountant roles
+    const ALLOWED = ['OWNER','ADMIN','ACCOUNTANT_MASTER','ACCOUNTANT_ASSISTANT','MANAGING_PARTNER'];
+    if (!ALLOWED.includes(String(user.role)))
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
+    // scope by company
+    const me = await prisma.user.findUnique({ where: { id: Number(user.id) }, select: { companyId: true } });
+    const companyId = me?.companyId ?? 0;
+
     const expenses = await prisma.expense.findMany({
-      where: { approved: false },
+      where: { 
+        approved: false,
+        project: { client: { companyId } },
+      },
       orderBy: { incurredOn: 'asc' },
       include: {
         user: { select: { name: true } },
