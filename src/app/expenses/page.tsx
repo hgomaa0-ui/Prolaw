@@ -38,10 +38,24 @@ export default function ExpensesPage() {
     }
   };
   const currentUserId = getUserIdFromToken();
+  // decode role to know if admin
+  const getRoleFromToken = () => {
+    if (!token) return null;
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      return payload.role ?? null;
+    } catch {
+      return null;
+    }
+  };
+  const role = getRoleFromToken();
+  const isAdmin = ["OWNER","ADMIN","MANAGING_PARTNER","HR_MANAGER","LAWYER_MANAGER"].includes(String(role));
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [clients, setClients] = useState<any[]>([]);
   const [projects, setProjects] = useState<any[]>([]);
   const [assignments, setAssignments] = useState<any[]>([]);
+  const [lawyers, setLawyers] = useState<{id:number;name:string}[]>([]);
+  const [selectedUserId, setSelectedUserId] = useState<number|"">("");
 
   // form state
   const [clientId, setClientId] = useState("");
@@ -59,10 +73,11 @@ export default function ExpensesPage() {
   const headers = token ? { Authorization: `Bearer ${token}` } : undefined;
 
   const loadLists = async () => {
-    const [cRes, pRes, aRes] = await Promise.all([
+    const [cRes, pRes, aRes, lRes] = await Promise.all([
       fetch("/api/clients", { headers }),
       fetch("/api/projects", { headers }),
       fetch("/api/assignments", { headers }),
+      isAdmin ? fetch("/api/lawyers", { headers }) : Promise.resolve(new Response(JSON.stringify([]), { headers: { 'Content-Type':'application/json' } })),
     ]);
     if (cRes.ok) setClients(await cRes.json());
     if (aRes.ok) {
@@ -76,6 +91,10 @@ export default function ExpensesPage() {
       setProjects(uniqProjects);
     } else if (pRes.ok) {
       setProjects(await pRes.json());
+    }
+    if (isAdmin && lRes.ok) {
+      const ls = await lRes.json();
+      setLawyers(Array.isArray(ls) ? ls : []);
     }
   };
 
@@ -114,13 +133,17 @@ export default function ExpensesPage() {
         }
       }
     try {
-      const res = await fetch("/api/expenses", {
+      const isAdminMode = isAdmin && selectedUserId !== "";
+      const url = isAdminMode ? "/api/admin/expenses" : "/api/expenses";
+      const payload:any = { projectId: Number(projectId), amount: Number(amount), currency, type: type || 'OTHER', description, receiptUrl };
+      if (isAdminMode) payload.userId = Number(selectedUserId);
+      const res = await fetch(url, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           ...headers,
         },
-        body: JSON.stringify({ projectId: Number(projectId), amount: Number(amount), currency, type: type || 'OTHER', description, receiptUrl }),
+        body: JSON.stringify(payload),
       });
       if (res.ok) {
         resetForm();
@@ -140,6 +163,19 @@ export default function ExpensesPage() {
 
       {/* form */}
       <form onSubmit={handleSubmit} className="mb-8 grid grid-cols-1 gap-4 md:grid-cols-3">
+        {isAdmin && (
+          <select
+            className="rounded border px-3 py-2"
+            value={selectedUserId}
+            onChange={(e)=>setSelectedUserId(e.target.value? Number(e.target.value):"")}
+            required
+          >
+            <option value="">Select Lawyer</option>
+            {lawyers.map(l=> (
+              <option key={l.id} value={l.id}>{l.name}</option>
+            ))}
+          </select>
+        )}
         <select
           className="rounded border px-3 py-2"
           value={clientId}
@@ -166,7 +202,8 @@ export default function ExpensesPage() {
             .filter((p: any) => {
               const projClientId = (p.clientId ?? (p.client?.id)) as number | undefined;
               const clientOk = !clientId || projClientId === Number(clientId);
-              const assignedOk = assignments.some((a:any)=>a.projectId===p.id && (!currentUserId || a.userId===currentUserId));
+              const targetUser = isAdmin && selectedUserId !== "" ? Number(selectedUserId) : currentUserId;
+              const assignedOk = assignments.some((a:any)=>a.projectId===p.id && (!targetUser || a.userId===targetUser));
               return clientOk && assignedOk;
             })
             .map((p: any) => (

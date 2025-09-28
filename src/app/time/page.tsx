@@ -26,6 +26,7 @@ interface ProjectOption {
   name: string;
   clientId: number;
 }
+interface LawyerOption { id:number; name:string }
 
 interface TimeEntry {
   id: number;
@@ -40,6 +41,7 @@ interface TimeEntry {
 export default function TimeEntriesPage() {
   const [clients, setClients] = useState<ClientOption[]>([]);
   const [projects, setProjects] = useState<ProjectOption[]>([]);
+  const [lawyers, setLawyers] = useState<LawyerOption[]>([]);
   const [entries, setEntries] = useState<TimeEntry[]>([]);
   const [now, setNow] = useState(Date.now()); // update each second for live timer
   const [tick, setTick] = useState(0); // minute tick for summaries
@@ -65,11 +67,13 @@ export default function TimeEntriesPage() {
 
   const token = getAuth();
   const role = decodeRole(token || undefined);
+  const isAdmin = ["OWNER","ADMIN","MANAGING_PARTNER","HR_MANAGER","LAWYER_MANAGER"].includes(String(role));
+  const [selectedUserId, setSelectedUserId] = useState<number | "">("");
 
   const fetchInitial = async () => {
     if (!token) return;
     try {
-      const [clientRes, projRes, entryRes] = await Promise.all([
+      const [clientRes, projRes, entryRes, lawyersRes] = await Promise.all([
         fetch("/api/clients", { headers: { Authorization: `Bearer ${token}` } }),
         fetch(!(role === "OWNER" || role === "ADMIN") ? "/api/my-projects" : "/api/projects", {
           headers: { Authorization: `Bearer ${token}` },
@@ -77,11 +81,16 @@ export default function TimeEntriesPage() {
         fetch("/api/time-entries", {
           headers: { Authorization: `Bearer ${token}` },
         }),
+        isAdmin ? fetch('/api/lawyers', { headers: { Authorization: `Bearer ${token}` } }) : Promise.resolve(new Response(JSON.stringify([]), { headers: { 'Content-Type':'application/json' } })),
       ]);
       const clientsData = await clientRes.json();
       const projData = await projRes.json();
       const projArr = Array.isArray(projData) ? projData : [];
       setProjects(projArr);
+      if (isAdmin) {
+        const lawyersData = await lawyersRes.json();
+        setLawyers(Array.isArray(lawyersData) ? lawyersData : []);
+      }
       if (role === "OWNER" || role === "ADMIN") {
         setClients(Array.isArray(clientsData) ? clientsData : []);
       } else {
@@ -230,6 +239,7 @@ export default function TimeEntriesPage() {
 
   const addQuickHours = async () => {
     if (!token || projectId === "" || !quickDate || !quickHours) return;
+    if (isAdmin && selectedUserId === "") { alert('Select lawyer'); return; }
     const hrs = Number(quickHours);
     if (isNaN(hrs) || hrs <= 0) { alert('Enter valid hours'); return; }
     setSubmitting(true);
@@ -242,15 +252,18 @@ export default function TimeEntriesPage() {
         const pad = (n:number)=>String(n).padStart(2,'0');
         return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
       };
-      const res = await fetch('/api/time-entries',{
-        method:'POST',
-        headers:{'Content-Type':'application/json', Authorization:`Bearer ${token}`},
-        body: JSON.stringify({
+      const url = isAdmin && selectedUserId !== "" ? '/api/admin/time-entries' : '/api/time-entries';
+      const body:any = {
           projectId: Number(projectId),
           startTs: fmt(startDate),
           endTs: fmt(endDate),
           notes
-        })
+      };
+      if (isAdmin && selectedUserId !== "") body.userId = Number(selectedUserId);
+      const res = await fetch(url,{
+        method:'POST',
+        headers:{'Content-Type':'application/json', Authorization:`Bearer ${token}`},
+        body: JSON.stringify(body)
       });
       const created = await safeJson(res);
       if(!res.ok) throw new Error((created as any)?.error || res.statusText);
@@ -318,6 +331,19 @@ export default function TimeEntriesPage() {
 
       {/* quick add by Date + Hours */}
       <div className="mb-6 grid gap-2 sm:grid-cols-6">
+        {isAdmin && (
+          <select
+            value={selectedUserId}
+            onChange={(e)=>setSelectedUserId(e.target.value? Number(e.target.value):"")}
+            className="rounded border px-3 py-2"
+            required
+          >
+            <option value="">Select lawyer</option>
+            {lawyers.map(l=> (
+              <option key={l.id} value={l.id}>{l.name}</option>
+            ))}
+          </select>
+        )}
         <select
           value={clientId}
           onChange={(e) => {
