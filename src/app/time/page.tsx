@@ -237,6 +237,14 @@ export default function TimeEntriesPage() {
     setNotes(entry.notes || "");
   };
 
+  // auto-submit helper for quick entry
+  const tryAutoQuickSubmit = async () => {
+    if (submitting) return;
+    if (!quickDate || !quickHours || projectId === "") return;
+    if (isAdmin && selectedUserId === "") return;
+    await addQuickHours();
+  };
+
   const addQuickHours = async () => {
     if (!token || projectId === "" || !quickDate || !quickHours) return;
     if (isAdmin && selectedUserId === "") { alert('Select lawyer'); return; }
@@ -376,8 +384,8 @@ export default function TimeEntriesPage() {
               </option>
             ))}
         </select>
-        <input type="date" value={quickDate} onChange={(e)=>setQuickDate(e.target.value)} className="rounded border px-3 py-2" required />
-        <input type="number" step="0.25" min="0" placeholder="Hours" value={quickHours} onChange={(e)=>setQuickHours(e.target.value)} className="rounded border px-3 py-2" required />
+        <input type="date" value={quickDate} onChange={(e)=>setQuickDate(e.target.value)} onBlur={tryAutoQuickSubmit} className="rounded border px-3 py-2" required />
+        <input type="number" step="0.25" min="0" placeholder="Hours" value={quickHours} onChange={(e)=>setQuickHours(e.target.value)} onKeyDown={(e)=>{ if(e.key==='Enter'){ e.preventDefault(); tryAutoQuickSubmit(); } }} onBlur={tryAutoQuickSubmit} className="rounded border px-3 py-2" required />
         <input type="text" placeholder="Notes" value={notes} onChange={(e)=>setNotes(e.target.value)} className="rounded border px-3 py-2" />
         <button type="button" onClick={addQuickHours} className="rounded bg-blue-600 px-4 py-2 font-semibold text-white disabled:opacity-50" disabled={submitting || clientId==="" || projectId===""}>
           Add Hours
