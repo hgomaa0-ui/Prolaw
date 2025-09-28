@@ -8,8 +8,8 @@ interface Project { id:number; name:string; clientId:number }
 export default function AdminTimeEntryPage(){
   const [lawyers,setLawyers]=useState<Lawyer[]>([]);
   const [projects,setProjects]=useState<Project[]>([]);
-  const [userId,setUserId]=useState<number|"")("");
-  const [projectId,setProjectId]=useState<number|"")("");
+  const [userId,setUserId]=useState<number | "">("");
+  const [projectId,setProjectId]=useState<number | "">("");
   const [date,setDate]=useState("");
   const [hours,setHours]=useState<string>("");
   const [notes,setNotes]=useState("");
