@@ -10,7 +10,9 @@ function getUser(req: NextRequest) {
   if (!token) return null;
   try {
     const d = jwt.verify(token, JWT_SECRET) as any;
-    return d ? { id: Number(d.sub), role: d.role } : null;
+    const sub = d?.sub ?? d?.id;
+    const idNum = sub ? Number(sub) : NaN;
+    return d && !Number.isNaN(idNum) ? { id: idNum, role: d.role } : null;
   } catch {
     return null;
   }
@@ -27,7 +29,9 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
     // scope by company
-    const me = await prisma.user.findUnique({ where: { id: Number(user.id) }, select: { companyId: true } });
+    const uid = Number(user.id);
+    if (!uid) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const me = await prisma.user.findUnique({ where: { id: uid }, select: { companyId: true } });
     const companyId = me?.companyId ?? 0;
 
     const expenses = await prisma.expense.findMany({
