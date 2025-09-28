@@ -57,6 +57,9 @@ export default function TimeEntriesPage() {
   const [startTs, setStartTs] = useState("");
   const [endTs, setEndTs] = useState("");
   const [notes, setNotes] = useState("");
+  // quick entry: date + hours
+  const [quickDate, setQuickDate] = useState("");
+  const [quickHours, setQuickHours] = useState<string>("");
   const [submitting, setSubmitting] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
 
@@ -225,6 +228,42 @@ export default function TimeEntriesPage() {
     setNotes(entry.notes || "");
   };
 
+  const addQuickHours = async () => {
+    if (!token || projectId === "" || !quickDate || !quickHours) return;
+    const hrs = Number(quickHours);
+    if (isNaN(hrs) || hrs <= 0) { alert('Enter valid hours'); return; }
+    setSubmitting(true);
+    try {
+      // start at 00:00 local time
+      const start = `${quickDate}T00:00`;
+      const startDate = new Date(start);
+      const endDate = new Date(startDate.getTime() + hrs * 60 * 60 * 1000);
+      const fmt = (d: Date) => {
+        const pad = (n:number)=>String(n).padStart(2,'0');
+        return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+      };
+      const res = await fetch('/api/time-entries',{
+        method:'POST',
+        headers:{'Content-Type':'application/json', Authorization:`Bearer ${token}`},
+        body: JSON.stringify({
+          projectId: Number(projectId),
+          startTs: fmt(startDate),
+          endTs: fmt(endDate),
+          notes
+        })
+      });
+      const created = await safeJson(res);
+      if(!res.ok) throw new Error((created as any)?.error || res.statusText);
+      const proj = projects.find(p=>p.id===Number(projectId));
+      const withProj = proj ? { ...created, project: { id: proj.id, name: proj.name } } : created;
+      setEntries(prev=>[withProj, ...prev]);
+      // reset quick fields
+      setQuickDate(""); setQuickHours(""); setNotes("");
+    } catch(err:any){
+      alert(err.message);
+    } finally { setSubmitting(false); }
+  };
+
   const deleteEntry = async (id: number) => {
     if (!confirm("Delete this entry?")) return;
     if (!token) return;
@@ -277,7 +316,49 @@ export default function TimeEntriesPage() {
         })()
       )}
 
-      {/* add entry form */}
+      {/* quick add by Date + Hours */}
+      <div className="mb-6 grid gap-2 sm:grid-cols-6">
+        <select
+          value={clientId}
+          onChange={(e) => {
+            const val = e.target.value ? Number(e.target.value) : "";
+            setClientId(val);
+            setProjectId("");
+          }}
+          className="rounded border px-3 py-2"
+          required
+        >
+          <option value="">Select client</option>
+          {clients.map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.name}
+            </option>
+          ))}
+        </select>
+        <select
+          value={projectId}
+          onChange={(e) => setProjectId(e.target.value ? Number(e.target.value) : "")}
+          className="rounded border px-3 py-2"
+          required
+        >
+          <option value="">Select project</option>
+          {projects
+            .filter((p) => clientId !== "" && p.clientId === clientId)
+            .map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.name}
+              </option>
+            ))}
+        </select>
+        <input type="date" value={quickDate} onChange={(e)=>setQuickDate(e.target.value)} className="rounded border px-3 py-2" required />
+        <input type="number" step="0.25" min="0" placeholder="Hours" value={quickHours} onChange={(e)=>setQuickHours(e.target.value)} className="rounded border px-3 py-2" required />
+        <input type="text" placeholder="Notes" value={notes} onChange={(e)=>setNotes(e.target.value)} className="rounded border px-3 py-2" />
+        <button type="button" onClick={addQuickHours} className="rounded bg-blue-600 px-4 py-2 font-semibold text-white disabled:opacity-50" disabled={submitting || clientId==="" || projectId===""}>
+          Add Hours
+        </button>
+      </div>
+
+      {/* advanced entry form (start/end) */}
       <form onSubmit={submitEntry} className="mb-6 grid gap-2 sm:grid-cols-6">
         <select
           value={clientId}
