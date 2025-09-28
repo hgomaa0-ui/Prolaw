@@ -36,6 +36,8 @@ export default function AdminTimeEntryPage(){
     load();
   },[token]);
 
+  const currentLawyer = typeof userId === 'number' ? lawyers.find(l=>l.id===userId) : null;
+
   const submit = async(e:React.FormEvent)=>{
     e.preventDefault();
     if(!token || userId==="" || projectId==="" || !date || !hours) return;
@@ -60,6 +62,11 @@ export default function AdminTimeEntryPage(){
     <div className="container mx-auto max-w-3xl p-6">
       <h1 className="text-2xl font-bold mb-4">Admin: Add Time Entry</h1>
       {error && <p className="text-red-600 mb-3">{error}</p>}
+      {currentLawyer && (
+        <div className="mb-2 text-sm text-gray-700">
+          Adding time for: <span className="font-semibold">{currentLawyer.name}</span>
+        </div>
+      )}
       <form onSubmit={submit} className="grid gap-3 sm:grid-cols-2">
         <select value={userId} onChange={e=>setUserId(e.target.value? Number(e.target.value):"")} className="rounded border px-3 py-2" required>
           <option value="">Select Lawyer</option>
