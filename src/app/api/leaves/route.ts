@@ -51,7 +51,7 @@ export async function GET(req: NextRequest) {
     const emp = await prisma.employee.findFirst({ where: { userId } });
     // if no employee record, return empty list to avoid breaking the page for new users
     if (!emp) return NextResponse.json([]);
-    whereClause.employeeId = emp.id;
+    whereClause.AND.push({ employee: { user: { companyId: { not: null, equals: companyId } } } });
   }
 
   const leaves = await prisma.leaveRequest.findMany({
