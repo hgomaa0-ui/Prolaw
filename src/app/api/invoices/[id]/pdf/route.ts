@@ -1,19 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-// Use puppeteer-core + @sparticuz/chromium on Vercel to avoid installing full Chrome
+// Use chrome-aws-lambda + puppeteer-core on Vercel to avoid installing full Chrome
 import type { Browser } from "puppeteer-core";
-let puppeteer: typeof import("puppeteer-core");
-let chromium: typeof import("@sparticuz/chromium");
-const isVercel = process.env.VERCEL === "1";
-if (isVercel) {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  chromium = require("@sparticuz/chromium");
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  puppeteer = require("puppeteer-core");
-} else {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  puppeteer = require("puppeteer"); // local dev has full puppeteer
-}
+import chromium from "chrome-aws-lambda";
+import type { Browser } from "puppeteer-core";
 import { renderInvoiceHTML } from "@/lib/invoiceHtml";
+const isVercel = process.env.VERCEL === "1";
+
 
 
 import { prisma } from "@/lib/prisma";
@@ -93,13 +85,15 @@ export async function GET(
 
     let browser: Browser;
 if (isVercel) {
+  const puppeteer = await import("puppeteer-core");
   browser = await puppeteer.launch({
     args: chromium.args,
     defaultViewport: chromium.defaultViewport,
-    executablePath: await chromium.executablePath(),
+    executablePath: await chromium.executablePath,
     headless: chromium.headless,
   });
 } else {
+  const puppeteer = await import("puppeteer");
   browser = await puppeteer.launch({
     headless: true,
     args: ["--no-sandbox","--font-render-hinting=medium"],

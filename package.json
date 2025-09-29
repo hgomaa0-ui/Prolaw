@@ -37,7 +37,7 @@
     "nodemailer": "^6.9.7",
     "pdf-lib": "^1.17.1",
     "puppeteer-core": "^24.14.0",
-    "@sparticuz/chromium": "^113.0.0",
+    "chrome-aws-lambda": "^10.1.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-hot-toast": "^2.5.2",
