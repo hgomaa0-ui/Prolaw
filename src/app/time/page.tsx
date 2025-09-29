@@ -344,9 +344,8 @@ export default function TimeEntriesPage() {
             value={selectedUserId}
             onChange={(e)=>setSelectedUserId(e.target.value? Number(e.target.value):"")}
             className="rounded border px-3 py-2"
-            required
           >
-            <option value="">Select lawyer</option>
+            <option value="">For myself</option>
             {lawyers.map(l=> (
               <option key={l.id} value={l.id}>{l.name}</option>
             ))}
