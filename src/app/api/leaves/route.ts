@@ -28,6 +28,7 @@ function getUserId(req: NextRequest): number | null {
 }
 
 function isHR(role: string | null) {
+  // ADMIN_REPORTS is NOT HR; restrict to own leaves
   return role === 'ADMIN' || role === 'HR_MANAGER' || role==='OWNER';
 }
 
@@ -48,7 +49,8 @@ export async function GET(req: NextRequest) {
   if (!isHR(role)) {
     if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     const emp = await prisma.employee.findFirst({ where: { userId } });
-    if (!emp) return NextResponse.json({ error: 'No employee record' }, { status: 404 });
+    // if no employee record, return empty list to avoid breaking the page for new users
+    if (!emp) return NextResponse.json([]);
     whereClause.employeeId = emp.id;
   }
 
