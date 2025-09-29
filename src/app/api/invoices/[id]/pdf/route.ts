@@ -1,5 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
-import puppeteer from "puppeteer";
+// Use puppeteer-core + @sparticuz/chromium on Vercel to avoid installing full Chrome
+import type { Browser } from "puppeteer-core";
+let puppeteer: typeof import("puppeteer-core");
+let chromium: typeof import("@sparticuz/chromium");
+const isVercel = process.env.VERCEL === "1";
+if (isVercel) {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  chromium = require("@sparticuz/chromium");
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  puppeteer = require("puppeteer-core");
+} else {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  puppeteer = require("puppeteer"); // local dev has full puppeteer
+}
 import { renderInvoiceHTML } from "@/lib/invoiceHtml";
 
 
@@ -78,7 +91,20 @@ export async function GET(
       isArabic,
     });
 
-    const browser = await puppeteer.launch({args:["--no-sandbox","--font-render-hinting=medium"]});
+    let browser: Browser;
+if (isVercel) {
+  browser = await puppeteer.launch({
+    args: chromium.args,
+    defaultViewport: chromium.defaultViewport,
+    executablePath: await chromium.executablePath(),
+    headless: chromium.headless,
+  });
+} else {
+  browser = await puppeteer.launch({
+    headless: true,
+    args: ["--no-sandbox","--font-render-hinting=medium"],
+  });
+}
     const page = await browser.newPage();
     await page.setContent(html, { waitUntil: "networkidle0" });
     const pdfBuffer = await page.pdf({ format: "A4", printBackground: true });
