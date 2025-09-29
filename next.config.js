@@ -9,6 +9,14 @@ const nextConfig = {
     ignoreBuildErrors: true,
   },
   reactStrictMode: true,
+  webpack: (config, { isServer }) => {
+    // Exclude source map files from chrome-aws-lambda which crash webpack
+    config.module.rules.push({ test: /\.map$/, use: 'ignore-loader' });
+    if (isServer) {
+      config.externals.push({ 'chrome-aws-lambda': 'commonjs chrome-aws-lambda' });
+    }
+    return config;
+  },
   images: {
     remotePatterns: [
       {

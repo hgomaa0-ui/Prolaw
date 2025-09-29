@@ -59,6 +59,7 @@
     "tailwindcss": "^3.4.1",
     "ts-node": "^10.9.2",
     "typescript": "^5",
-    "puppeteer": "^10.4.0"
+    "puppeteer": "^10.4.0",
+    "ignore-loader": "^0.1.2"
   }
 }
