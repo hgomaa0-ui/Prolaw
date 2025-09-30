@@ -1,10 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-// Use chrome-aws-lambda + puppeteer-core on Vercel to avoid installing full Chrome
-import type { Browser } from "puppeteer-core";
-import chromium from "chrome-aws-lambda";
-import type { Browser } from "puppeteer-core";
+import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
+import * as reshaper from "arabic-persian-reshaper";
 import { renderInvoiceHTML } from "@/lib/invoiceHtml";
-const isVercel = process.env.VERCEL === "1";
 
 
 
@@ -83,7 +80,8 @@ export async function GET(
       isArabic,
     });
 
-    let browser: Browser;
+    const pdfDoc = await PDFDocument.create();
+    const page = pdfDoc.addPage([595, 842]);
 if (isVercel) {
   browser = await chromium.puppeteer.launch({
     args: chromium.args,
