@@ -227,7 +227,7 @@ export default function InvoicesPage() {
                       </button>
                       <button
                         onClick={() => router.push(`/invoices/${invoice.invoiceNumber}/edit`)}
-                        className="text-indigo-600 hover:text-indigo-900"
+                        className="bg-indigo-600 text-white px-3 py-1 rounded hover:bg-indigo-700"
                       >
                         Edit
                       </button>
