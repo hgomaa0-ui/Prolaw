@@ -45,6 +45,7 @@ export async function GET(req: NextRequest) {
   const toParam = searchParams.get('to') || null;
   const role = getUserRole(req);
   const userId = getUserId(req);
+  const companyId = getCompanyId(req);
 
   // build where clause
   const whereClause: any = {
