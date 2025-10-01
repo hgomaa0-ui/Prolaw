@@ -19,9 +19,16 @@ function getUserRole(req: NextRequest): string | null {
   return getAuthPayload(req)?.role || null;
 }
 
+function getCompanyId(req: NextRequest): number | null {
+  const payload = getAuthPayload(req) as any;
+  const cid = payload?.companyId;
+  if (cid === undefined || cid === null) return null;
+  return typeof cid === 'number' ? cid : Number(cid);
+}
+
 function getUserId(req: NextRequest): number | null {
   const payload = getAuthPayload(req);
-  const raw = payload?.id ?? payload?.sub;
+  const raw = payload?.id ?? (payload as any)?.sub;
   if (raw === undefined || raw === null) return null;
   const num = typeof raw === 'number' ? raw : Number(raw);
   return isNaN(num) ? null : num;
@@ -49,9 +56,11 @@ export async function GET(req: NextRequest) {
   if (!isHR(role)) {
     if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     const emp = await prisma.employee.findFirst({ where: { userId } });
-    // if no employee record, return empty list to avoid breaking the page for new users
     if (!emp) return NextResponse.json([]);
-    whereClause.AND.push({ employee: { user: { companyId: { not: null, equals: companyId } } } });
+    whereClause.AND.push({ employeeId: emp.id });
+  } else {
+    if (!companyId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    whereClause.AND.push({ employee: { user: { companyId } } });
   }
 
   const leaves = await prisma.leaveRequest.findMany({
