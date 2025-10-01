@@ -15,6 +15,19 @@ export async function buildInvoicePdf(
   let regularFont = await pdfDoc.embedFont(StandardFonts.Helvetica);
   let boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
 
+  const currency = invoice.currency || 'USD';
+  const toNumber = (v: any) => {
+    if (typeof v === 'number') return v;
+    if (typeof v === 'string') return parseFloat(v);
+    if (v && typeof v === 'object' && 'toNumber' in v) {
+      try { return (v as any).toNumber(); } catch {}
+    }
+    return parseFloat(String(v));
+  };
+  const fmt = (v: any) => toNumber(v).toLocaleString('en-US', { style: 'currency', currency });
+  const formatDate = (d: any) => d ? new Date(d).toLocaleDateString('en-US') : '';
+
+
   /* ---------- Header ---------- */
   const FIRM_NAME = company?.name || process.env.NEXT_PUBLIC_FIRM_NAME || (isArabic ? 'اسم شركتك' : 'Your Firm');
     page.drawText(isArabic ? shape(FIRM_NAME) : FIRM_NAME, { x: 50, y: 800, size: 16, font: boldFont });
@@ -36,7 +49,7 @@ export async function buildInvoicePdf(
 
   /* ---------- Table Headers ---------- */
   let y = 680;
-  const headers = isArabic ? [shape('Description'), shape('Qty'), shape('Unit'), shape('Total')] : ['Description', 'Qty', 'Unit', 'Total'];
+  const headers = isArabic ? [shape('Description'), shape('Qty'), shape('Unit'), shape('Total')] : ['Description', 'Qty', 'Unit Price', 'Line Total'];
   [50, 300, 350, 460].forEach((x, i) => page.drawText(headers[i], { x, y, size: 11, font: boldFont }));
   y -= 12;
   page.drawLine({ start: { x: 50, y }, end: { x: 550, y }, thickness: 1, color: rgb(0.8,0.8,0.8) });
