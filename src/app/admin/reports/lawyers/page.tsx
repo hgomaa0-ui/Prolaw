@@ -67,6 +67,13 @@ export default function LawyersReportPage() {
           </select>
         </div>
         <div>
+          <label className="block text-sm font-medium mb-1">Lawyer</label>
+          <select value={lawyerId} onChange={e=>setLawyerId(e.target.value)} className="border rounded px-2 py-1 min-w-[200px]">
+            <option value="">All</option>
+            {lawyers.map(l=> <option key={l.id} value={l.id}>{l.name}</option>)}
+          </select>
+        </div>
+        <div>
           <label className="block text-sm font-medium mb-1">{t("startDate", { defaultValue: "Start" })}</label>
           <input type="date" value={start} onChange={(e)=>setStart(e.target.value)} className="border rounded px-2 py-1" />
         </div>
