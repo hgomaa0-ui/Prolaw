@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
+import { getAuth } from "@/lib/auth";
 import { useTranslation } from "react-i18next";
 
 interface LawyerRow {
@@ -18,6 +19,8 @@ export default function LawyersReportPage() {
   const { t } = useTranslation("reports");
   const [data, setData] = useState<LawyerRow[]>([]);
   const [projects, setProjects] = useState<{id:number,name:string}[]>([]);
+  const [lawyers, setLawyers] = useState<{id:number,name:string}[]>([]);
+  const [lawyerId, setLawyerId] = useState<string>("");
   const [projectId, setProjectId] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const [start, setStart] = useState<string>("");
@@ -28,6 +31,7 @@ export default function LawyersReportPage() {
     if(!projectId){ setData([]); setLoading(false); return; }
     const params = new URLSearchParams();
     params.set("projectId", projectId);
+    if(lawyerId) params.set("userId", lawyerId);
     if (start) params.set("start", start);
     if (end) params.set("end", end);
     const res = await fetch(`/api/reports/lawyers?${params.toString()}`);
@@ -42,6 +46,10 @@ export default function LawyersReportPage() {
       setProjects(arr);
       if(arr.length>0) setProjectId(String(arr[0].id));
     });
+    // fetch lawyers list
+    const token = getAuth();
+    fetch('/api/employees', { headers: token ? { Authorization: `Bearer ${token}` } : {} })
+      .then(r=>r.ok?r.json():[]).then((arr:any[])=> setLawyers(arr));
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
