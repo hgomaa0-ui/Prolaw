@@ -28,9 +28,8 @@ export default function LawyersReportPage() {
 
   async function load() {
     setLoading(true);
-    if(!projectId){ setData([]); setLoading(false); return; }
-    const params = new URLSearchParams();
-    params.set("projectId", projectId);
+        const params = new URLSearchParams();
+    if(projectId) params.set("projectId", projectId);
     if(lawyerId) params.set("userId", lawyerId);
     if (start) params.set("start", start);
     if (end) params.set("end", end);
@@ -44,8 +43,7 @@ export default function LawyersReportPage() {
     // fetch projects list
     fetch('/api/projects').then(r=>r.json()).then((arr)=>{
       setProjects(arr);
-      if(arr.length>0) setProjectId(String(arr[0].id));
-    });
+          });
     // fetch lawyers list
     const token = getAuth();
     fetch('/api/employees', { headers: token ? { Authorization: `Bearer ${token}` } : {} })
@@ -63,6 +61,7 @@ export default function LawyersReportPage() {
         <div>
           <label className="block text-sm font-medium mb-1">Project</label>
           <select value={projectId} onChange={e=>setProjectId(e.target.value)} className="border rounded px-2 py-1 min-w-[200px]">
+            <option value="">All</option>
             {projects.map(p=> <option key={p.id} value={p.id}>{p.name}</option>)}
           </select>
         </div>
