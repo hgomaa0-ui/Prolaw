@@ -25,6 +25,25 @@ export default function TasksPage() {
     description: "",
   });
 
+  // reference lists
+  const [clients, setClients] = useState<{ id: number; name: string }[]>([]);
+  const [projects, setProjects] = useState<{ id: number; name: string; clientId: number }[]>([]);
+  const [lawyers, setLawyers] = useState<{ id: number; name: string }[]>([]);
+
+  useEffect(() => {
+    Promise.all([
+      fetch('/api/list/clients').then(r => r.json()),
+      fetch('/api/list/projects').then(r => r.json()),
+      fetch('/api/list/lawyers').then(r => r.json()),
+    ])
+      .then(([c, p, l]) => {
+        setClients(c);
+        setProjects(p);
+        setLawyers(l);
+      })
+      .catch(() => {});
+  }, []);
+
   const load = () => {
     setLoading(true);
     fetch("/api/tasks")
@@ -170,22 +189,42 @@ export default function TasksPage() {
                   setForm({ ...form, description: e.target.value })
                 }
               ></textarea>
-              <input
-                type="number"
+              <select
                 className="w-full border p-2"
-                placeholder="Assignee ID"
+                value={form.clientId}
+                onChange={e => setForm({ ...form, clientId: e.target.value, projectId: '' })}
+              >
+                <option value="">Select Client</option>
+                {clients.map(c => (
+                  <option key={c.id} value={c.id}>{c.name}</option>
+                ))}
+              </select>
+              <select
+                className="w-full border p-2"
+                value={form.projectId}
+                onChange={e => setForm({ ...form, projectId: e.target.value })}
+                disabled={!form.clientId}
+              >
+                <option value="">Select Project</option>
+                {projects.filter(p => !form.clientId || p.clientId === parseInt(form.clientId)).map(p => (
+                  <option key={p.id} value={p.id}>{p.name}</option>
+                ))}
+              </select>
+              <select
+                className="w-full border p-2"
                 value={form.assigneeId}
-                onChange={(e) =>
-                  setForm({ ...form, assigneeId: e.target.value })
-                }
-              />
+                onChange={e => setForm({ ...form, assigneeId: e.target.value })}
+              >
+                <option value="">Select Lawyer</option>
+                {lawyers.map(l => (
+                  <option key={l.id} value={l.id}>{l.name}</option>
+                ))}
+              </select>
               <input
                 type="date"
                 className="w-full border p-2"
                 value={form.dueDate}
-                onChange={(e) =>
-                  setForm({ ...form, dueDate: e.target.value })
-                }
+                onChange={e => setForm({ ...form, dueDate: e.target.value })}
               />
             </div>
             <div className="mt-4 flex justify-end space-x-2">
