@@ -9,14 +9,14 @@ type UserRole = string; // roles now dynamic
 interface NavLink { href:string; label:string; key:string }
 const ADMIN_ROLES = ["ADMIN","MANAGING_PARTNER","ACCOUNTANT_MASTER","ACCOUNTANT_ASSISTANT","LAWYER_PARTNER","LAWYER_MANAGER"];
 const ROLE_PAGES: Record<string,string[]> = {
-  OWNER:["clients","projects","time","expenses","invoices","reports","accounts","settings","hr","leaves","notifications","admin_time"],
-  MANAGING_PARTNER:["clients","projects","time","expenses","invoices","reports","accounts","settings","hr","leaves","notifications","admin_time"],
-  ADMIN:["clients","projects","time","expenses","invoices","reports","accounts","settings","hr","leaves","notifications","admin_time"],
+  OWNER:["clients","projects","time","expenses","invoices","reports","accounts","settings","hr","leaves","notifications","admin_time","tasks"],
+  MANAGING_PARTNER:["clients","projects","time","expenses","invoices","reports","accounts","settings","hr","leaves","notifications","admin_time","tasks"],
+  ADMIN:["clients","projects","time","expenses","invoices","reports","accounts","settings","hr","leaves","notifications","admin_time","tasks"],
   ACCOUNTANT_MASTER:["invoices","reports","accounts","trust","leaves","payroll","notifications"],
   ACCOUNTANT_ASSISTANT:["invoices","accounts","leaves","notifications"],
-  LAWYER_PARTNER:["clients","projects","time","reports","leaves","settings"],
+  LAWYER_PARTNER:["clients","projects","time","reports","leaves","settings","tasks"],
   HR_MANAGER:["hr","employees","payroll","leaves","positions","notifications","admin_time"],
-  LAWYER_MANAGER:["time","expenses","reports","leaves","notifications","settings","admin_time"],
+  LAWYER_MANAGER:["time","expenses","reports","leaves","notifications","settings","admin_time","tasks"],
   HR:["hr","payroll","leaves","notifications"],
   LAWYER:["time","expenses","leaves","notifications"],
   ADMIN_REPORTS:["clients","projects","time","expenses","invoices","reports","settings","leaves","notifications"],
@@ -33,6 +33,7 @@ const links:NavLink[] = [
   { href: "/admin/time", label: "Admin Time", key:"admin_time" },
   { href: "/accounts", label: "Accounts", key:"accounts" },
   { href: "/admin/payroll", label: "Payroll", key:"payroll" },
+  { href: "/admin/tasks", label: "Tasks", key:"tasks" },
   { href: "/admin", label: "Admin", key:"settings" },
   { href: "/admin/hr", label: "HR", key:"hr" },
 
