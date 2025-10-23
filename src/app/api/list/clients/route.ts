@@ -10,9 +10,9 @@ export async function GET(req: NextRequest) {
     const u = await prisma.user.findUnique({ where: { id: session.user.id }, select: { companyId: true } });
     companyId = u?.companyId;
   }
-  if (!companyId) return NextResponse.json([]);
+  const where: any = companyId ? { companyId } : {};
   const clients = await prisma.client.findMany({
-    where: { companyId },
+    where,
     select: { id: true, name: true },
     orderBy: { name: 'asc' },
   });
