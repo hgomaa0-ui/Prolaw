@@ -11,7 +11,8 @@ generator client {
 datasource db {
   provider   = "postgresql"
   url        = env("PRISMA_DATABASE_URL")  // proxy (Accelerate) فى وقت التشغيل
-  directUrl  = env("POSTGRES_URL")          // اتصال مباشر للهجرات داخل Vercel build
+  directUrl  = env("POSTGRES_URL")
+  shadowDatabaseUrl = env("SHADOW_DB_URL")          // اتصال مباشر للهجرات داخل Vercel build
 }
 
 // Company tenant entity
@@ -136,6 +137,8 @@ model User {
   expenses            Expense[]
   documents           Document[]           @relation("uploadedDocs")
   notifications       Notification[]
+  tasksAssigned       Task[]         @relation("taskAssignee")
+  tasksCreated        Task[]         @relation("taskAssigner")
 
   // approvals relations
   managerApprovals    TimeEntry[] @relation("managerApproval")
@@ -204,6 +207,7 @@ model Client {
   // relations
   owner          User            @relation(fields: [ownerId], references: [id])
   projects       Project[]
+  tasks          Task[]       @relation("ClientTasks")
   trustAccounts  TrustAccount[]
   expenseCashLedgers ExpenseCashLedger[]
   invoices       Invoice[]
@@ -243,6 +247,7 @@ model Project {
   expenses          Expense[]
   documents         Document[]
   assignments       ProjectAssignment[]
+  tasks             Task[]         @relation("ProjectTasks")
   groupMemberships  GroupMembership[]
   reportAccesses    ReportAccess[]
   approvalScopes    ApprovalScope[]
@@ -884,3 +889,34 @@ model PayrollItem {
   employee         Employee          @relation(fields: [employeeId], references: [id])
   salaryDeductions SalaryDeduction[] @relation("ItemDeductions")
 }
+
+// ===== Task Management =====
+
+enum TaskStatus {
+  PENDING
+  IN_PROGRESS
+  DONE
+  REJECTED
+}
+
+model Task {
+  id          Int        @id @default(autoincrement())
+  title       String
+  description String?
+  clientId    Int?
+  projectId   Int?
+  assignerId  Int       // created by partner / managing partner / managing lawyer
+  assigneeId  Int       // lawyer assigned
+  dueDate     DateTime
+  status      TaskStatus @default(PENDING)
+  createdAt   DateTime   @default(now())
+
+  client   Client?  @relation("ClientTasks", fields: [clientId], references: [id])
+  project  Project? @relation("ProjectTasks", fields: [projectId], references: [id])
+  assigner User     @relation("taskAssigner", fields: [assignerId], references: [id])
+  assignee User     @relation("taskAssignee", fields: [assigneeId], references: [id])
+
+  @@index([assigneeId, dueDate])
+}
+
+

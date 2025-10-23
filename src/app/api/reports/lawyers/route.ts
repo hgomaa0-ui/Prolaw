@@ -23,11 +23,13 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const clientIdParam = searchParams.get('clientId');
   const projectIdParam = searchParams.get('projectId');
+  const userIdParam = searchParams.get('userId');
   const startParam = searchParams.get('start');
   const endParam = searchParams.get('end');
 
   const clientId = clientIdParam ? Number(clientIdParam) : undefined;
   const projectId = projectIdParam ? Number(projectIdParam) : undefined;
+  const userIdFilter = userIdParam ? Number(userIdParam) : undefined;
 
   const dateFilter: any = {};
   if (startParam) dateFilter.gte = new Date(startParam);
@@ -38,6 +40,7 @@ export async function GET(request: NextRequest) {
     where: {
       ...(startParam || endParam ? { startTs: dateFilter } : {}),
       ...(projectId ? { projectId } : {}),
+      ...(userIdFilter ? { userId: userIdFilter } : {}),
       ...(clientId ? { project: { clientId } } : {}),
     },
     include: {
