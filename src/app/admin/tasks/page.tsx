@@ -30,7 +30,7 @@ export default function TasksPage() {
     fetch("/api/tasks")
       .then((r) => r.json())
       .then(setTasks)
-      .catch(() => toast.error("خطأ"))
+      .catch(() => toast.error("Error"))
       .finally(() => setLoading(false));
   };
 
@@ -49,7 +49,7 @@ export default function TasksPage() {
         }),
       });
       if (!res.ok) throw new Error();
-      toast.success("تم إنشاء المهمة");
+      toast.success("Task created");
       setShowModal(false);
       setForm({
         title: "",
@@ -61,7 +61,7 @@ export default function TasksPage() {
       });
       load();
     } catch {
-      toast.error("فشل الإنشاء");
+      toast.error("Creation failed");
     }
   };
 
@@ -72,10 +72,10 @@ export default function TasksPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status }),
       });
-      toast.success("تم التحديث");
+      toast.success("Updated");
       load();
     } catch {
-      toast.error("خطأ فى التحديث");
+      toast.error("Update failed");
     }
   };
 
@@ -83,30 +83,30 @@ export default function TasksPage() {
     <div className="p-6 max-w-6xl mx-auto">
       <Toaster />
       <div className="flex justify-between items-center mb-4">
-        <h1 className="text-2xl font-semibold">المهام</h1>
+        <h1 className="text-2xl font-semibold">Tasks</h1>
         <button
           onClick={() => setShowModal(true)}
           className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
         >
-          إضافة مهمة
+          Add Task
         </button>
       </div>
 
       {loading ? (
-        <p>جاري التحميل...</p>
+        <p>Loading...</p>
       ) : (
         <div className="overflow-x-auto border rounded-lg">
           <table className="min-w-full divide-y divide-gray-200 text-sm">
             <thead className="bg-gray-50">
               <tr>
                 {[
-                  "العنوان",
-                  "العميل",
-                  "المشروع",
-                  "المكلَّف",
-                  "الموعد",
-                  "الحالة",
-                  "إجراءات",
+                  "Title",
+                  "Client",
+                  "Project",
+                  "Assignee",
+                  "Due Date",
+                  "Status",
+                  "Actions",
                 ].map((h) => (
                   <th
                     key={h}
@@ -135,13 +135,13 @@ export default function TasksPage() {
                       className="text-green-600 hover:underline"
                       onClick={() => updateStatus(t.id, "DONE")}
                     >
-                      تم
+                      Done
                     </button>
                     <button
                       className="text-red-600 hover:underline"
                       onClick={() => updateStatus(t.id, "REJECTED")}
                     >
-                      رفض
+                      Reject
                     </button>
                   </td>
                 </tr>
@@ -154,17 +154,17 @@ export default function TasksPage() {
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white w-full max-w-lg rounded-lg p-6">
-            <h2 className="text-xl font-semibold mb-4">إضافة مهمة</h2>
+            <h2 className="text-xl font-semibold mb-4">Add Task</h2>
             <div className="space-y-3">
               <input
                 className="w-full border p-2"
-                placeholder="العنوان"
+                placeholder="Title"
                 value={form.title}
                 onChange={(e) => setForm({ ...form, title: e.target.value })}
               />
               <textarea
                 className="w-full border p-2"
-                placeholder="الوصف"
+                placeholder="Description"
                 value={form.description}
                 onChange={(e) =>
                   setForm({ ...form, description: e.target.value })
@@ -173,7 +173,7 @@ export default function TasksPage() {
               <input
                 type="number"
                 className="w-full border p-2"
-                placeholder="معرّف المكلَّف"
+                placeholder="Assignee ID"
                 value={form.assigneeId}
                 onChange={(e) =>
                   setForm({ ...form, assigneeId: e.target.value })
@@ -193,13 +193,13 @@ export default function TasksPage() {
                 onClick={() => setShowModal(false)}
                 className="px-4 py-2 border rounded"
               >
-                إلغاء
+                Cancel
               </button>
               <button
                 onClick={addTask}
                 className="px-4 py-2 bg-blue-600 text-white rounded"
               >
-                حفظ
+                Save
               </button>
             </div>
           </div>
