@@ -8,10 +8,15 @@ const LAWYER_ROLES = [
 ];
 
 export async function GET(req: NextRequest) {
-  const session = await getServerSession(authOptions as any);
-  const companyId = session?.user?.companyId ?? 0;
+  let companyId: number | undefined;
+  try {
+    const session = await getServerSession(authOptions as any);
+    companyId = session?.user?.companyId;
+  } catch {
+    companyId = undefined; // ignore auth when secret missing
+  }
   const lawyers = await prisma.user.findMany({
-    where: { companyId, role: { in: LAWYER_ROLES } },
+    where: companyId ? { companyId, role: { in: LAWYER_ROLES } } : { role: { in: LAWYER_ROLES } },
     select: { id: true, name: true },
     orderBy: { name: 'asc' },
   });

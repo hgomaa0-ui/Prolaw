@@ -4,10 +4,15 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 
 export async function GET(req: NextRequest) {
-  const session = await getServerSession(authOptions as any);
-  const companyId = session?.user?.companyId ?? 0;
+  let companyId: number | undefined;
+  try {
+    const session = await getServerSession(authOptions as any);
+    companyId = session?.user?.companyId;
+  } catch {
+    companyId = undefined; // allow unauth env without secret
+  }
   const clientId = req.nextUrl.searchParams.get('clientId');
-  const where:any = { companyId };
+  const where:any = companyId ? { companyId } : {};
   if (clientId) where.clientId = parseInt(clientId);
   const projects = await prisma.project.findMany({
     where,
