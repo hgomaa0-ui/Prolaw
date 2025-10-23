@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import useSWR from 'swr';
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import TasksSection from "@/components/TasksSection";
 import { toast, Toaster } from "react-hot-toast";
 import { getAuth } from "@/lib/auth";
 
@@ -216,6 +217,9 @@ export default function ProjectDetailPage() {
           </table>
         )}
       </div>
+
+      {/* Tasks section */}
+      <TasksSection projectId={projectId} />
 
       {/* Payments table */}
       {loading ? (
