@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast, Toaster } from "react-hot-toast";
 import Link from "next/link";
+import ProjectTaskModal from "@/components/ProjectTaskModal";
 import { getAuth } from "@/lib/auth";
 import { fetchAuth } from "@/lib/fetchAuth";
 
@@ -31,6 +32,7 @@ export default function ProjectsPage() {
   const [tempStatus, setTempStatus] = useState("OPEN");
   const [tempAmount, setTempAmount] = useState("");
   const [tempCurrency, setTempCurrency] = useState("USD");
+  const [showTaskModal, setShowTaskModal] = useState<number|null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const router = useRouter();
@@ -186,6 +188,7 @@ export default function ProjectsPage() {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Advance Payment
                   </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tasks</th>
                   <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider" />
                 </tr>
               </thead>
@@ -257,6 +260,9 @@ export default function ProjectsPage() {
                       )}
                     </td>
                     
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <button onClick={()=>setShowTaskModal(p.id)} className="text-indigo-600 hover:underline text-sm">Add Task</button>
+                    </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
                       {editingId === p.id ? (
                         <>
@@ -308,6 +314,13 @@ export default function ProjectsPage() {
           ← Back to Dashboard
         </Link>
       </p>
+    {showTaskModal && (
+      <ProjectTaskModal
+        projectId={showTaskModal}
+        onClose={()=>setShowTaskModal(null)}
+        onSaved={fetchProjects}
+      />
+    )}
     </div>
   );
 }
