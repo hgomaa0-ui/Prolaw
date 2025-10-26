@@ -25,10 +25,19 @@ export async function GET(req: NextRequest) {
       baseWhere.assignments = { some: { projectId: pid } };
     }
   }
-  const lawyers = await prisma.user.findMany({
+  let lawyers = await prisma.user.findMany({
     where: baseWhere,
     select: { id: true, name: true },
     orderBy: { name: 'asc' },
   });
+  if (projectId && lawyers.length === 0) {
+    // fallback: return all company lawyers so user can assign new one
+    const { assignments, ...companyWhere } = baseWhere;
+    lawyers = await prisma.user.findMany({
+      where: companyWhere,
+      select: { id: true, name: true },
+      orderBy: { name: 'asc' },
+    });
+  }
   return NextResponse.json(lawyers);
 }
