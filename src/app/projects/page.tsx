@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast, Toaster } from "react-hot-toast";
 import Link from "next/link";
-import ProjectTaskModal from "@/components/ProjectTaskModal";
+import ProjectTaskModal from "../../components/ProjectTaskModal";
 import { getAuth } from "@/lib/auth";
 import { fetchAuth } from "@/lib/fetchAuth";
 
