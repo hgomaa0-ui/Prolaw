@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import toast, { Toaster } from "react-hot-toast";
+import { getAuth } from "@/lib/auth";
 
 interface Task {
   id: number;
@@ -15,6 +16,7 @@ interface Props {
 }
 
 export default function TasksSection({ projectId }: Props) {
+  const token = getAuth();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -28,7 +30,10 @@ export default function TasksSection({ projectId }: Props) {
 
   const load = () => {
     setLoading(true);
-    fetch(`/api/tasks?projectId=${projectId}`, { credentials: 'include' })
+    fetch(`/api/tasks?projectId=${projectId}`, {
+      credentials: 'include',
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    })
       .then(async (r) => {
         if (!r.ok) {
           throw new Error(`HTTP ${r.status}`);
@@ -49,7 +54,7 @@ export default function TasksSection({ projectId }: Props) {
 
   useEffect(() => {
     load();
-    fetch("/api/list/lawyers", { credentials: 'include' }).then((r) => r.json()).then(setLawyers).catch(()=>{});
+    fetch("/api/list/lawyers", { credentials: 'include', headers: token ? { Authorization: `Bearer ${token}` } : {} }).then((r) => r.json()).then(setLawyers).catch(()=>{});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -59,7 +64,10 @@ export default function TasksSection({ projectId }: Props) {
       const res = await fetch("/api/tasks", {
         credentials: 'include',
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
         body: JSON.stringify({
           ...form,
           projectId,
@@ -81,7 +89,10 @@ export default function TasksSection({ projectId }: Props) {
       await fetch(`/api/tasks/${id}`, {
         credentials: 'include',
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
         body: JSON.stringify({ status }),
       });
       load();
