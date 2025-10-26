@@ -14,7 +14,7 @@ const ROLE_PAGES: Record<string,string[]> = {
   ADMIN:["clients","projects","time","expenses","invoices","reports","accounts","settings","hr","leaves","notifications","admin_time","tasks"],
   ACCOUNTANT_MASTER:["invoices","reports","accounts","trust","leaves","payroll","notifications"],
   ACCOUNTANT_ASSISTANT:["invoices","accounts","leaves","notifications"],
-  LAWYER_PARTNER:["clients","projects","time","reports","leaves","settings","tasks"],
+  LAWYER_PARTNER:["clients","projects","time","reports","leaves","settings"],
   HR_MANAGER:["hr","employees","payroll","leaves","positions","notifications","admin_time"],
   LAWYER_MANAGER:["time","expenses","reports","leaves","notifications","settings","admin_time","tasks"],
   HR:["hr","payroll","leaves","notifications"],
@@ -33,7 +33,6 @@ const links:NavLink[] = [
   { href: "/admin/time", label: "Admin Time", key:"admin_time" },
   { href: "/accounts", label: "Accounts", key:"accounts" },
   { href: "/admin/payroll", label: "Payroll", key:"payroll" },
-  { href: "/admin/tasks", label: "Tasks", key:"tasks" },
   { href: "/admin", label: "Admin", key:"settings" },
   { href: "/admin/hr", label: "HR", key:"hr" },
 
