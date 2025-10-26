@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/auth';
+import { authOptions, getAuthServer } from '@/lib/auth';
+import jwt from 'jsonwebtoken';
+const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-change-me';
 
 // GET /api/tasks -> list tasks for current user (or all if admin)
 export async function GET(req: NextRequest) {
@@ -36,11 +38,14 @@ export async function POST(req: NextRequest) {
   let session = await getServerSession(authOptions);
   if (!session?.user) {
     // try bearer/JWT token
-    try {
-      const { getToken } = await import('next-auth/jwt');
-      const token = await getToken({ req, raw: false, secret: process.env.NEXTAUTH_SECRET });
-      if (token) session = { user: token } as any;
-    } catch {}
+    // attempt custom JWT cookie "token"
+    const raw = getAuthServer(req as any);
+    if (raw) {
+      try {
+        const decoded = jwt.verify(raw, JWT_SECRET) as any;
+        session = { user: decoded } as any;
+      } catch {}
+    }
   }
   if (!session?.user) {
     return NextResponse.json({ error: 'Unauthenticated' }, { status: 401 });
