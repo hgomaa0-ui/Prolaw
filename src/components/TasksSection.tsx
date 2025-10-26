@@ -29,9 +29,21 @@ export default function TasksSection({ projectId }: Props) {
   const load = () => {
     setLoading(true);
     fetch(`/api/tasks?projectId=${projectId}`)
-      .then((r) => r.json())
+      .then(async (r) => {
+        if (!r.ok) {
+          throw new Error(`HTTP ${r.status}`);
+        }
+        return r.json();
+      })
       .then(setTasks)
-      .catch(() => toast.error("Failed to load tasks"))
+      .catch((err) => {
+        if (err.message.includes('401')) {
+          toast.error('Session expired – please log in');
+        } else {
+          toast.error('Failed to load tasks');
+        }
+        setTasks([]);
+      })
       .finally(() => setLoading(false));
   };
 
