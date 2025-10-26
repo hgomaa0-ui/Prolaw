@@ -33,11 +33,19 @@ export async function GET(req: NextRequest) {
 
 // POST /api/tasks -> create new task
 export async function POST(req: NextRequest) {
-  const session = await getServerSession(authOptions);
+  let session = await getServerSession(authOptions);
+  if (!session?.user) {
+    // try bearer/JWT token
+    try {
+      const { getToken } = await import('next-auth/jwt');
+      const token = await getToken({ req, raw: false, secret: process.env.NEXTAUTH_SECRET });
+      if (token) session = { user: token } as any;
+    } catch {}
+  }
   if (!session?.user) {
     return NextResponse.json({ error: 'Unauthenticated' }, { status: 401 });
   }
-  const role = session.user.role as string;
+  const role = (session.user as any).role as string;
   if (!['LAWYER_PARTNER','MANAGING_PARTNER','MANAGING_PARTNER','OWNER','ADMIN'].includes(role)) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
