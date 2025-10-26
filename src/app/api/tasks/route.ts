@@ -57,5 +57,12 @@ export async function POST(req: NextRequest) {
       dueDate: new Date(dueDate),
     }
   });
+  if (projectId) {
+    await prisma.projectAssignment.upsert({
+      where: { userId_projectId: { userId: assigneeId, projectId } },
+      create: { userId: assigneeId, projectId },
+      update: {},
+    });
+  }
   return NextResponse.json(task, { status: 201 });
 }
