@@ -5,6 +5,7 @@ import useSWR from 'swr';
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { toast, Toaster } from "react-hot-toast";
+import ProjectTaskModal from "../../../components/ProjectTaskModal";
 import { getAuth } from "@/lib/auth";
 
 interface Payment {
@@ -38,6 +39,7 @@ export default function ProjectDetailPage() {
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [attType, setAttType] = useState<'POWER_OF_ATTORNEY'|'CONTRACT'|'OTHER'>('OTHER');
   const [attFiles, setAttFiles] = useState<FileList|null>(null);
+  const [showTaskModal, setShowTaskModal] = useState(false);
 
   const [amount, setAmount] = useState("");
   const [currency, setCurrency] = useState("USD");
@@ -216,6 +218,15 @@ export default function ProjectDetailPage() {
           </table>
         )}
       </div>
+
+      {/* Project Task button */}
+      <div className="mb-8">
+        <button onClick={()=>setShowTaskModal(true)} className="bg-blue-600 text-white px-4 py-1 rounded text-sm">Add Task</button>
+      </div>
+
+      {showTaskModal && (
+        <ProjectTaskModal projectId={projectId} onClose={()=>setShowTaskModal(false)} />
+      )}
 
       {/* Payments table */}
       {loading ? (
