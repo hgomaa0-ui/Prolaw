@@ -21,7 +21,7 @@ export default function ProjectTaskModal({ projectId, onClose, onSaved }: Props)
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    fetch("/api/list/lawyers", {
+    fetch(`/api/list/lawyers?projectId=${projectId}`, {
       credentials: "include",
       headers: token ? { Authorization: `Bearer ${token}` } : {},
     })

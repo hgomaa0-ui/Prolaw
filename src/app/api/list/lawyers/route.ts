@@ -15,8 +15,18 @@ export async function GET(req: NextRequest) {
   } catch {
     companyId = undefined; // ignore auth when secret missing
   }
+  const projectId = req.nextUrl.searchParams.get('projectId');
+
+  const baseWhere:any = { role: { in: LAWYER_ROLES } };
+  if (companyId) baseWhere.companyId = companyId;
+  if (projectId) {
+    const pid = parseInt(projectId);
+    if (!Number.isNaN(pid)) {
+      baseWhere.projectAssignments = { some: { projectId: pid } };
+    }
+  }
   const lawyers = await prisma.user.findMany({
-    where: companyId ? { companyId, role: { in: LAWYER_ROLES } } : { role: { in: LAWYER_ROLES } },
+    where: baseWhere,
     select: { id: true, name: true },
     orderBy: { name: 'asc' },
   });
