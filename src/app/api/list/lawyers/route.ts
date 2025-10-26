@@ -22,7 +22,7 @@ export async function GET(req: NextRequest) {
   if (projectId) {
     const pid = parseInt(projectId);
     if (!Number.isNaN(pid)) {
-      baseWhere.projectAssignments = { some: { projectId: pid } };
+      baseWhere.assignments = { some: { projectId: pid } };
     }
   }
   const lawyers = await prisma.user.findMany({
