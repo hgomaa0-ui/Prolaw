@@ -28,7 +28,7 @@ export default function TasksSection({ projectId }: Props) {
 
   const load = () => {
     setLoading(true);
-    fetch(`/api/tasks?projectId=${projectId}`)
+    fetch(`/api/tasks?projectId=${projectId}`, { credentials: 'include' })
       .then(async (r) => {
         if (!r.ok) {
           throw new Error(`HTTP ${r.status}`);
@@ -49,7 +49,7 @@ export default function TasksSection({ projectId }: Props) {
 
   useEffect(() => {
     load();
-    fetch("/api/list/lawyers").then((r) => r.json()).then(setLawyers).catch(()=>{});
+    fetch("/api/list/lawyers", { credentials: 'include' }).then((r) => r.json()).then(setLawyers).catch(()=>{});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -57,6 +57,7 @@ export default function TasksSection({ projectId }: Props) {
     if (!form.title || !form.assigneeId || !form.dueDate) return;
     try {
       const res = await fetch("/api/tasks", {
+        credentials: 'include',
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -78,6 +79,7 @@ export default function TasksSection({ projectId }: Props) {
   const updateStatus = async (id: number, status: string) => {
     try {
       await fetch(`/api/tasks/${id}`, {
+        credentials: 'include',
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status }),
