@@ -819,6 +819,3 @@ model Task {
 
   @@index([assigneeId, dueDate])
 }
-
-  @@index([assigneeId, dueDate])
-}
