@@ -60,10 +60,8 @@ model User {
   managerApprovals      TimeEntry[]          @relation("managerApproval")
   timeEntries           TimeEntry[]
   transactionsCreated   Transaction[]        @relation("UserTransactions")
-  tasksAssigned        Task[]                @relation("taskAssignee")
-  tasksCreated         Task[]                @relation("taskAssigner")
-  tasks                Task[]                @relation("ClientTasks")
-  tasks                Task[]                @relation("ProjectTasks")
+  tasksAssigned         Task[]               @relation("taskAssignee")
+  tasksCreated          Task[]               @relation("taskAssigner")
   company               Company?             @relation(fields: [companyId], references: [id])
   position              Position?            @relation(fields: [positionId], references: [id])
   permissions           UserPermission[]
@@ -116,6 +114,7 @@ model Client {
   projects           Project[]
   reportAccesses     ReportAccess[]
   trustAccounts      TrustAccount[]
+  tasks              Task[]              @relation("ClientTasks")
 }
 
 model Project {
@@ -157,6 +156,7 @@ model Project {
   timeEntries        TimeEntry[]
   trustAccounts      TrustAccount[]
   trustTransactions  TrustTransaction[]
+  tasks              Task[]              @relation("ProjectTasks")
 
   @@unique([companyId, code])
 }
@@ -797,6 +797,7 @@ enum PayrollStatus {
   HR_APPROVED
   ACC_APPROVED
 }
+
 enum TaskStatus {
   PENDING
   IN_PROGRESS
