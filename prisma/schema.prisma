@@ -60,6 +60,10 @@ model User {
   managerApprovals      TimeEntry[]          @relation("managerApproval")
   timeEntries           TimeEntry[]
   transactionsCreated   Transaction[]        @relation("UserTransactions")
+  tasksAssigned        Task[]                @relation("taskAssignee")
+  tasksCreated         Task[]                @relation("taskAssigner")
+  tasks                Task[]                @relation("ClientTasks")
+  tasks                Task[]                @relation("ProjectTasks")
   company               Company?             @relation(fields: [companyId], references: [id])
   position              Position?            @relation(fields: [positionId], references: [id])
   permissions           UserPermission[]
