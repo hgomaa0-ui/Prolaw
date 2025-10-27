@@ -793,3 +793,29 @@ enum PayrollStatus {
   HR_APPROVED
   ACC_APPROVED
 }
+enum TaskStatus {
+  PENDING
+  IN_PROGRESS
+  DONE
+  REJECTED
+}
+
+model Task {
+  id          Int        @id @default(autoincrement())
+  title       String
+  description String?
+  clientId    Int?
+  projectId   Int?
+  assignerId  Int
+  assigneeId  Int
+  dueDate     DateTime
+  status      TaskStatus @default(PENDING)
+  createdAt   DateTime   @default(now())
+
+  client   Client?  @relation(fields: [clientId], references: [id])
+  project  Project? @relation(fields: [projectId], references: [id])
+  assigner User     @relation("taskAssigner", fields: [assignerId], references: [id])
+  assignee User     @relation("taskAssignee", fields: [assigneeId], references: [id])
+
+  @@index([assigneeId, dueDate])
+}
