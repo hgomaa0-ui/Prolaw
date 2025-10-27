@@ -812,8 +812,8 @@ model Task {
   status      TaskStatus @default(PENDING)
   createdAt   DateTime   @default(now())
 
-  client   Client?  @relation(fields: [clientId], references: [id])
-  project  Project? @relation(fields: [projectId], references: [id])
+  client   Client?  @relation("ClientTasks", fields: [clientId], references: [id])
+  project  Project? @relation("ProjectTasks", fields: [projectId], references: [id])
   assigner User     @relation("taskAssigner", fields: [assignerId], references: [id])
   assignee User     @relation("taskAssignee", fields: [assigneeId], references: [id])
 
