@@ -1,54 +1,695 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider   = "postgresql"
-  url        = env("PRISMA_DATABASE_URL")  // proxy (Accelerate) فى وقت التشغيل
-  directUrl  = env("POSTGRES_URL")
-  shadowDatabaseUrl = env("SHADOW_DB_URL")          // اتصال مباشر للهجرات داخل Vercel build
+  provider          = "postgresql"
+  url               = env("PRISMA_DATABASE_URL")
+  directUrl         = env("POSTGRES_URL")
+  shadowDatabaseUrl = env("SHADOW_DB_URL")
 }
 
-// Company tenant entity
 model Company {
-  id                Int                @id @default(autoincrement())
-  name              String             @unique
-  address           String?
-  phone             String?
-  logoUrl           String?
-  users             User[]
-  clients           Client[]
-  projects          Project[]
-  accounts          Account[]
-  invoices          Invoice[]
-  payrollBatches    PayrollBatch[]
-  bankAccounts      BankAccount[]
-  bankTransactions BankTransaction[]
-  officeExpenses    OfficeExpense[]
-  incomeCashLedgers IncomeCashLedger[]
+  id                 Int                 @id @default(autoincrement())
+  name               String              @unique
+  address            String?
+  logoUrl            String?
+  phone              String?
+  accounts           Account[]
+  bankAccounts       BankAccount[]
+  bankTransactions   BankTransaction[]
+  clients            Client[]
   expenseCashLedgers ExpenseCashLedger[]
+  incomeCashLedgers  IncomeCashLedger[]
+  invoices           Invoice[]
+  officeExpenses     OfficeExpense[]
+  payrollBatches     PayrollBatch[]
+  projects           Project[]
+  users              User[]
 }
 
-// Enums
+model User {
+  id                    Int                  @id @default(autoincrement())
+  name                  String
+  email                 String               @unique
+  passwordHash          String
+  role                  Role                 @default(LAWYER)
+  createdAt             DateTime             @default(now())
+  positionId            Int?
+  address               String?
+  phone                 String?
+  companyId             Int?
+  ApprovalScope         ApprovalScope[]
+  clients               Client[]
+  documents             Document[]           @relation("uploadedDocs")
+  employee              Employee?            @relation("userEmployee")
+  expenses              Expense[]
+  GroupMembership       GroupMembership[]
+  managers              ManagerLawyer[]      @relation("lawyerManager")
+  managedLawyers        ManagerLawyer[]      @relation("managerLawyers")
+  notifications         Notification[]
+  payrollBatchesCreated PayrollBatch[]       @relation("payrollBatchesCreated")
+  payrollRunsCreated    PayrollRun[]         @relation("runCreator")
+  createdPenalties      Penalty[]            @relation("UserCreatedPenalties")
+  projects              Project[]
+  assignments           ProjectAssignment[]
+  projectAttachments    ProjectAttachment[]
+  ReportAccess          ReportAccess[]
+  createdDeductions     SalaryDeduction[]    @relation("UserCreatedDeductions")
+  accountantApprovals   TimeEntry[]          @relation("accountantApproval")
+  managerApprovals      TimeEntry[]          @relation("managerApproval")
+  timeEntries           TimeEntry[]
+  transactionsCreated   Transaction[]        @relation("UserTransactions")
+  company               Company?             @relation(fields: [companyId], references: [id])
+  position              Position?            @relation(fields: [positionId], references: [id])
+  permissions           UserPermission[]
+  documentPermissions   DocumentPermission[] @relation("userPermissions")
+}
+
+model Position {
+  id          Int           @id @default(autoincrement())
+  name        String        @unique
+  defaultRate Decimal?
+  currency    CurrencyCode?
+  users       User[]
+}
+
+model ProjectAssignment {
+  id                Int           @id @default(autoincrement())
+  userId            Int
+  projectId         Int
+  canLogTime        Boolean       @default(true)
+  currency          CurrencyCode?
+  hourlyRate        Decimal?
+  readyForInvoicing Boolean       @default(false)
+  project           Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user              User          @relation(fields: [userId], references: [id])
+
+  @@unique([userId, projectId])
+}
+
+model Client {
+  id                 Int                 @id @default(autoincrement())
+  ownerId            Int
+  name               String
+  contactEmail       String?
+  phone              String?
+  address            String?
+  notes              String?
+  createdAt          DateTime            @default(now())
+  /// Default AR account for this client
+  accountId          Int?
+  /// Unique shorthand code (e.g. C0001)
+  code               String?             @unique
+  companyId          Int
+  approvalScopes     ApprovalScope[]
+  account            Account?            @relation("ClientAccount", fields: [accountId], references: [id])
+  company            Company             @relation(fields: [companyId], references: [id])
+  owner              User                @relation(fields: [ownerId], references: [id])
+  documents          Document[]
+  expenseCashLedgers ExpenseCashLedger[]
+  invoices           Invoice[]
+  projects           Project[]
+  reportAccesses     ReportAccess[]
+  trustAccounts      TrustAccount[]
+}
+
+model Project {
+  id                 Int                 @id @default(autoincrement())
+  ownerId            Int
+  clientId           Int
+  name               String
+  description        String?
+  hourlyRate         Decimal?
+  status             ProjectStatus       @default(OPEN)
+  createdAt          DateTime            @default(now())
+  advanceAmount      Decimal?
+  advanceCurrency    CurrencyCode?
+  /// Revenue account for this project
+  accountId          Int?
+  /// Unique shorthand code (e.g. P0001-01)
+  code               String?
+  companyId          Int
+  billingType        BillingType         @default(HOURS)
+  fixedFee           Decimal?
+  rateSource         RateSource?
+  billingCurrency    CurrencyCode?
+  advancePayments    AdvancePayment[]
+  approvalScopes     ApprovalScope[]
+  documents          Document[]
+  expenses           Expense[]
+  expenseCashLedgers ExpenseCashLedger[]
+  groupMemberships   GroupMembership[]
+  incomeCashLedgers  IncomeCashLedger[]  @relation("ProjectIncomeLedger")
+  invoices           Invoice[]
+  officeExpenses     OfficeExpense[]
+  account            Account?            @relation("ProjectAccount", fields: [accountId], references: [id])
+  client             Client              @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  company            Company             @relation(fields: [companyId], references: [id])
+  owner              User                @relation(fields: [ownerId], references: [id])
+  assignments        ProjectAssignment[]
+  attachments        ProjectAttachment[]
+  reportAccesses     ReportAccess[]
+  timeEntries        TimeEntry[]
+  trustAccounts      TrustAccount[]
+  trustTransactions  TrustTransaction[]
+
+  @@unique([companyId, code])
+}
+
+model TimeEntry {
+  id                 Int       @id @default(autoincrement())
+  projectId          Int
+  userId             Int
+  startTs            DateTime
+  endTs              DateTime?
+  durationMins       Int
+  notes              String?
+  billable           Boolean   @default(true)
+  accountantApproved Boolean   @default(false)
+  accountantId       Int?
+  managerApproved    Boolean   @default(false)
+  managerId          Int?
+  /// linked to invoice when billed
+  invoiceId          Int?
+  invoiced           Boolean   @default(false)
+  accountant         User?     @relation("accountantApproval", fields: [accountantId], references: [id])
+  invoice            Invoice?  @relation(fields: [invoiceId], references: [id])
+  manager            User?     @relation("managerApproval", fields: [managerId], references: [id])
+  project            Project   @relation(fields: [projectId], references: [id])
+  user               User      @relation(fields: [userId], references: [id])
+}
+
+model Expense {
+  id          Int           @id @default(autoincrement())
+  projectId   Int
+  userId      Int
+  amount      Decimal
+  description String
+  incurredOn  DateTime
+  billable    Boolean       @default(true)
+  currency    CurrencyCode?
+  approved    Boolean       @default(false)
+  /// linked to invoice when billed
+  invoiceId   Int?
+  invoiced    Boolean       @default(false)
+  receiptUrl  String?
+  receiptFile Bytes?
+  receiptMime String?
+  invoice     Invoice?      @relation(fields: [invoiceId], references: [id])
+  project     Project       @relation(fields: [projectId], references: [id])
+  user        User          @relation(fields: [userId], references: [id])
+}
+
+model Invoice {
+  id                Int                @id @default(autoincrement())
+  clientId          Int
+  invoiceNumber     String             @unique
+  issueDate         DateTime
+  dueDate           DateTime
+  status            InvoiceStatus      @default(DRAFT)
+  subtotal          Decimal
+  tax               Decimal?           @default(0)
+  total             Decimal
+  createdAt         DateTime           @default(now())
+  discount          Decimal            @default(0)
+  currency          CurrencyCode       @default(USD)
+  language          InvoiceLanguage    @default(EN)
+  projectId         Int?
+  trustDeducted     Decimal            @default(0)
+  companyId         Int
+  arPosted          Boolean            @default(false)
+  bankId            Int?
+  expenses          Expense[]
+  bank              BankAccount?       @relation(fields: [bankId], references: [id])
+  client            Client             @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  company           Company            @relation(fields: [companyId], references: [id])
+  project           Project?           @relation(fields: [projectId], references: [id])
+  items             InvoiceItem[]
+  payments          Payment[]
+  timeEntries       TimeEntry[]
+  trustTransactions TrustTransaction[]
+}
+
+model InvoiceItem {
+  id          Int      @id @default(autoincrement())
+  invoiceId   Int
+  itemType    ItemType
+  refId       Int?
+  description String
+  quantity    Decimal
+  unitPrice   Decimal
+  lineTotal   Decimal
+  invoice     Invoice  @relation(fields: [invoiceId], references: [id])
+}
+
+model Document {
+  id          Int                  @id @default(autoincrement())
+  projectId   Int?
+  clientId    Int?
+  uploaderId  Int
+  filename    String
+  mimeType    String
+  storageKey  String
+  sizeBytes   Int
+  createdAt   DateTime             @default(now())
+  client      Client?              @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  project     Project?             @relation(fields: [projectId], references: [id])
+  uploader    User                 @relation("uploadedDocs", fields: [uploaderId], references: [id])
+  permissions DocumentPermission[]
+}
+
+model TrustAccount {
+  id           Int                @id @default(autoincrement())
+  clientId     Int
+  balance      Decimal            @default(0)
+  currency     CurrencyCode       @default(USD)
+  createdAt    DateTime           @default(now())
+  projectId    Int?
+  accountType  AccountType        @default(TRUST)
+  client       Client             @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  project      Project?           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  transactions TrustTransaction[]
+
+  @@unique([clientId, projectId, currency, accountType])
+}
+
+model TrustTransaction {
+  id             Int          @id @default(autoincrement())
+  trustAccountId Int
+  txnType        TrustTxnType
+  amount         Decimal
+  description    String?
+  txnDate        DateTime     @default(now())
+  invoiceId      Int?
+  projectId      Int?
+  invoice        Invoice?     @relation(fields: [invoiceId], references: [id])
+  project        Project?     @relation(fields: [projectId], references: [id])
+  trustAccount   TrustAccount @relation(fields: [trustAccountId], references: [id], onDelete: Cascade)
+}
+
+model DocumentPermission {
+  docId       Int
+  userId      Int
+  canView     Boolean  @default(true)
+  canDownload Boolean  @default(true)
+  canDelete   Boolean  @default(false)
+  document    Document @relation(fields: [docId], references: [id])
+  user        User     @relation("userPermissions", fields: [userId], references: [id])
+
+  @@id([docId, userId])
+  @@map("document_permissions")
+}
+
+model AdvancePayment {
+  id          Int          @id @default(autoincrement())
+  projectId   Int
+  amount      Decimal
+  currency    CurrencyCode
+  paidOn      DateTime     @default(now())
+  notes       String?
+  accountType AccountType  @default(TRUST)
+  consumed    Decimal      @default(0)
+  bankId      Int?
+  bank        BankAccount? @relation(fields: [bankId], references: [id])
+  project     Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
+
+model BankAccount {
+  id                Int                @id @default(autoincrement())
+  companyId         Int
+  name              String
+  balance           Decimal            @default(0)
+  currency          CurrencyCode       @default(USD)
+  createdAt         DateTime           @default(now())
+  advancePayments   AdvancePayment[]
+  company           Company            @relation(fields: [companyId], references: [id])
+  bankTransactions  BankTransaction[]
+  incomeCashLedgers IncomeCashLedger[]
+  invoices          Invoice[]
+  officeExpenses    OfficeExpense[]
+}
+
+model ProjectAttachment {
+  id           Int            @id @default(autoincrement())
+  projectId    Int
+  type         AttachmentType @default(OTHER)
+  url          String
+  uploadedById Int?
+  createdAt    DateTime       @default(now())
+  project      Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  uploadedBy   User?          @relation(fields: [uploadedById], references: [id])
+}
+
+model BankTransaction {
+  id        Int          @id @default(autoincrement())
+  bankId    Int
+  amount    Decimal
+  currency  CurrencyCode
+  memo      String?
+  createdAt DateTime     @default(now())
+  companyId Int?
+  bank      BankAccount  @relation(fields: [bankId], references: [id])
+  company   Company?     @relation(fields: [companyId], references: [id], onUpdate: NoAction)
+
+  @@index([companyId])
+}
+
+model Employee {
+  id               Int               @id @default(autoincrement())
+  name             String
+  status           EmployeeStatus    @default(ACTIVE)
+  department       String?
+  hireDate         DateTime?
+  userId           Int?              @unique
+  createdAt        DateTime          @default(now())
+  email            String?           @unique
+  leaveBalanceDays Decimal           @default(0)
+  attendances      Attendance[]
+  user             User?             @relation("userEmployee", fields: [userId], references: [id])
+  leaves           LeaveRequest[]
+  payrollItems     PayrollItem[]
+  payslips         Payslip[]
+  penalties        Penalty[]         @relation("EmployeePenalties")
+  salaries         Salary[]
+  salaryDeductions SalaryDeduction[]
+}
+
+model Salary {
+  id            Int          @id @default(autoincrement())
+  employeeId    Int
+  amount        Decimal
+  currency      CurrencyCode @default(USD)
+  effectiveFrom DateTime
+  employee      Employee     @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@index([employeeId, effectiveFrom])
+}
+
+model Penalty {
+  id          Int          @id @default(autoincrement())
+  employeeId  Int
+  date        DateTime     @default(now())
+  amount      Decimal
+  currency    CurrencyCode @default(USD)
+  reason      String?
+  createdById Int
+  createdBy   User         @relation("UserCreatedPenalties", fields: [createdById], references: [id])
+  employee    Employee     @relation("EmployeePenalties", fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@index([employeeId, date])
+}
+
+model LeaveRequest {
+  id         Int         @id @default(autoincrement())
+  employeeId Int
+  startDate  DateTime
+  endDate    DateTime
+  type       LeaveType
+  status     LeaveStatus @default(PENDING)
+  reason     String?
+  createdAt  DateTime    @default(now())
+  employee   Employee    @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@index([employeeId, startDate, endDate])
+}
+
+model Attendance {
+  id         Int       @id @default(autoincrement())
+  employeeId Int
+  clockIn    DateTime  @default(now())
+  clockOut   DateTime?
+  createdAt  DateTime  @default(now())
+  employee   Employee  @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@index([employeeId, clockIn])
+}
+
+model Notification {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  type      String
+  message   String
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, read])
+}
+
+model Permission {
+  id    Int              @id @default(autoincrement())
+  code  String           @unique
+  name  String
+  users UserPermission[]
+}
+
+model UserPermission {
+  userId       Int
+  permissionId Int
+  allowed      Boolean    @default(true)
+  clientIds    Json       @default("[]")
+  itemIds      Json       @default("[]")
+  lawyerIds    Json       @default("[]")
+  projectIds   Json       @default("[]")
+  permission   Permission @relation(fields: [permissionId], references: [id])
+  user         User       @relation(fields: [userId], references: [id])
+
+  @@id([userId, permissionId])
+}
+
+model OfficeExpense {
+  id        Int          @id @default(autoincrement())
+  companyId Int
+  bankId    Int
+  amount    Decimal
+  currency  CurrencyCode @default(USD)
+  notes     String?
+  projectId Int?
+  createdAt DateTime     @default(now())
+  bank      BankAccount  @relation(fields: [bankId], references: [id])
+  company   Company      @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  project   Project?     @relation(fields: [projectId], references: [id])
+}
+
+model IncomeCashLedger {
+  id        Int              @id @default(autoincrement())
+  companyId Int
+  bankId    Int?
+  projectId Int?
+  source    IncomeCashSource
+  amount    Decimal
+  currency  CurrencyCode     @default(USD)
+  notes     String?
+  createdAt DateTime         @default(now())
+  bank      BankAccount?     @relation(fields: [bankId], references: [id])
+  company   Company          @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  project   Project?         @relation("ProjectIncomeLedger", fields: [projectId], references: [id])
+
+  @@index([companyId, createdAt])
+}
+
+model ExpenseCashLedger {
+  id        Int      @id @default(autoincrement())
+  companyId Int
+  clientId  Int?
+  projectId Int?
+  amount    Decimal
+  currency  String   @default("USD")
+  notes     String?
+  createdAt DateTime @default(now()) @db.Timestamp(6)
+  client    Client?  @relation(fields: [clientId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  project   Project? @relation(fields: [projectId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([companyId, createdAt])
+}
+
+model Group {
+  id      Int               @id @default(autoincrement())
+  name    String            @unique
+  members GroupMembership[]
+}
+
+model GroupMembership {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  groupId   Int
+  isManager Boolean  @default(false)
+  projectId Int?
+  group     Group    @relation(fields: [groupId], references: [id])
+  Project   Project? @relation(fields: [projectId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@unique([userId, groupId])
+}
+
+model ReportAccess {
+  id         Int      @id @default(autoincrement())
+  userId     Int
+  reportCode String
+  clientId   Int?
+  projectId  Int?
+  client     Client?  @relation(fields: [clientId], references: [id])
+  project    Project? @relation(fields: [projectId], references: [id])
+  user       User     @relation(fields: [userId], references: [id])
+}
+
+model ManagerLawyer {
+  managerId Int
+  lawyerId  Int
+  lawyer    User @relation("lawyerManager", fields: [lawyerId], references: [id])
+  manager   User @relation("managerLawyers", fields: [managerId], references: [id])
+
+  @@id([managerId, lawyerId])
+}
+
+model ApprovalScope {
+  id        Int          @id @default(autoincrement())
+  userId    Int
+  type      ApprovalType
+  clientId  Int?
+  projectId Int?
+  client    Client?      @relation(fields: [clientId], references: [id])
+  project   Project?     @relation(fields: [projectId], references: [id])
+  user      User         @relation(fields: [userId], references: [id])
+}
+
+model PayrollRun {
+  id          Int       @id @default(autoincrement())
+  month       Int
+  year        Int
+  processedAt DateTime?
+  createdBy   Int
+  createdAt   DateTime  @default(now())
+  approvedAt  DateTime?
+  creator     User      @relation("runCreator", fields: [createdBy], references: [id])
+  payslips    Payslip[]
+
+  @@index([year, month])
+}
+
+model Payslip {
+  id           Int        @id @default(autoincrement())
+  payrollRunId Int
+  employeeId   Int
+  baseSalary   Decimal
+  overtimePay  Decimal    @default(0)
+  deductions   Decimal    @default(0)
+  netPay       Decimal
+  pdfUrl       String?
+  createdAt    DateTime   @default(now())
+  employee     Employee   @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  payrollRun   PayrollRun @relation(fields: [payrollRunId], references: [id], onDelete: Cascade)
+
+  @@index([employeeId, payrollRunId])
+}
+
+model Payment {
+  id           Int      @id @default(autoincrement())
+  invoiceId    Int
+  amount       Decimal
+  paidOn       DateTime
+  gateway      String?
+  txnReference String?
+  invoice      Invoice  @relation(fields: [invoiceId], references: [id])
+}
+
+model Account {
+  id        Int               @id @default(autoincrement())
+  code      String
+  name      String
+  type      AccountType
+  companyId Int
+  company   Company           @relation(fields: [companyId], references: [id])
+  clients   Client[]          @relation("ClientAccount")
+  projects  Project[]         @relation("ProjectAccount")
+  lines     TransactionLine[]
+
+  @@unique([companyId, code])
+}
+
+model Transaction {
+  id        Int               @id @default(autoincrement())
+  date      DateTime          @default(now())
+  memo      String?
+  posted    Boolean           @default(true)
+  createdBy Int?
+  creator   User?             @relation("UserTransactions", fields: [createdBy], references: [id])
+  lines     TransactionLine[]
+}
+
+model Setting {
+  key   String @id
+  value String
+}
+
+model TransactionLine {
+  id            Int          @id @default(autoincrement())
+  transactionId Int
+  accountId     Int
+  debit         Decimal      @default(0)
+  credit        Decimal      @default(0)
+  currency      CurrencyCode @default(USD)
+  account       Account      @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  transaction   Transaction  @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+}
+
+model SalaryDeduction {
+  id            Int          @id @default(autoincrement())
+  employeeId    Int
+  amount        Decimal
+  currency      CurrencyCode
+  reason        String?
+  issuedOn      DateTime     @default(now())
+  createdById   Int
+  payrollItemId Int?
+  creator       User         @relation("UserCreatedDeductions", fields: [createdById], references: [id])
+  employee      Employee     @relation(fields: [employeeId], references: [id])
+  payrollItem   PayrollItem? @relation("ItemDeductions", fields: [payrollItemId], references: [id])
+}
+
+model PayrollBatch {
+  id            Int           @id @default(autoincrement())
+  companyId     Int
+  month         Int
+  year          Int
+  status        PayrollStatus @default(DRAFT)
+  createdAt     DateTime      @default(now())
+  hrApprovedAt  DateTime?
+  accApprovedAt DateTime?
+  createdById   Int
+  company       Company       @relation(fields: [companyId], references: [id])
+  creator       User          @relation("payrollBatchesCreated", fields: [createdById], references: [id])
+  items         PayrollItem[]
+
+  @@unique([companyId, month, year])
+}
+
+model PayrollItem {
+  id               Int               @id @default(autoincrement())
+  batchId          Int
+  employeeId       Int
+  grossSalary      Decimal
+  totalDeductions  Decimal
+  netSalary        Decimal
+  batch            PayrollBatch      @relation(fields: [batchId], references: [id])
+  employee         Employee          @relation(fields: [employeeId], references: [id])
+  salaryDeductions SalaryDeduction[] @relation("ItemDeductions")
+}
+
 enum Role {
-  OWNER // super user / firm owner
-  ADMIN // full access
-  ADMIN_VIEWER // read-only admin access
-  ADMIN_REPORTS // view clients/projects/reports only
-  ACCOUNTANT_MASTER // invoices + trusts + reports
-  ACCOUNTANT_ASSISTANT // invoices + approve expenses (no trusts/reports)
-  LAWYER_PARTNER // see lawyer reports, enter time/expenses, approve lawyer time
-  MANAGING_PARTNER // full reports + accounts access
-  LAWYER_MANAGER // manage section lawyers, time/expenses, see performance reports
-  HR_MANAGER // HR manager with full HR + payroll
-  HR // human resources basic role
-  LAWYER // enter own time/expenses only
+  ADMIN
+  ACCOUNTANT_MASTER
+  ACCOUNTANT_ASSISTANT
+  LAWYER_PARTNER
+  LAWYER_MANAGER
+  LAWYER
+  OWNER
+  HR
+  HR_MANAGER
+  MANAGING_PARTNER
+  ADMIN_REPORTS
 }
 
 enum ProjectStatus {
@@ -86,9 +727,9 @@ enum InvoiceLanguage {
 enum CurrencyCode {
   USD
   EUR
+  EGP
   GBP
   SAR
-  EGP
   AED
   QAR
   KWD
@@ -99,12 +740,12 @@ enum CurrencyCode {
 }
 
 enum AccountType {
-  TRUST // client trust accounts & retainers
+  TRUST
+  EXPENSE
   ASSET
   LIABILITY
   EQUITY
   INCOME
-  EXPENSE
 }
 
 enum EmployeeStatus {
@@ -113,419 +754,15 @@ enum EmployeeStatus {
   TERMINATED
 }
 
-// Models
-model User {
-  companyId    Int?
-  company      Company? @relation(fields: [companyId], references: [id])
-  id           Int      @id @default(autoincrement())
-  name         String
-  email        String   @unique
-  phone        String?
-  address      String?
-  passwordHash String
-  role         Role     @default(LAWYER)
-  positionId   Int?
-  createdAt    DateTime @default(now())
-
-  // relations
-  clients             Client[]
-  projects            Project[]
-  documentPermissions DocumentPermission[] @relation("userPermissions")
-  permissions         UserPermission[]
-  timeEntries         TimeEntry[]
-  assignments         ProjectAssignment[]
-  expenses            Expense[]
-  documents           Document[]           @relation("uploadedDocs")
-  notifications       Notification[]
-  tasksAssigned       Task[]         @relation("taskAssignee")
-  tasksCreated        Task[]         @relation("taskAssigner")
-
-  // approvals relations
-  managerApprovals    TimeEntry[] @relation("managerApproval")
-  accountantApprovals TimeEntry[] @relation("accountantApproval")
-
-  position        Position?         @relation(fields: [positionId], references: [id])
-  GroupMembership GroupMembership[]
-  ReportAccess    ReportAccess[]
-  ApprovalScope   ApprovalScope[]
-
-  // manager relations
-  managedLawyers        ManagerLawyer[]     @relation("managerLawyers")
-  managers              ManagerLawyer[]     @relation("lawyerManager")
-  // payroll relations
-  payrollRunsCreated    PayrollRun[]        @relation("runCreator")
-  employee              Employee?           @relation("userEmployee")
-  createdPenalties      Penalty[]           @relation("UserCreatedPenalties")
-  transactionsCreated   Transaction[]       @relation("UserTransactions")
-  projectAttachments    ProjectAttachment[]
-  // payroll
-  payrollBatchesCreated PayrollBatch[]      @relation("payrollBatchesCreated")
-  createdDeductions     SalaryDeduction[]   @relation("UserCreatedDeductions")
-}
-
-model Position {
-  id          Int           @id @default(autoincrement())
-  name        String        @unique
-  defaultRate Decimal?
-  currency    CurrencyCode?
-
-  users User[]
-}
-
-model ProjectAssignment {
-  id                Int           @id @default(autoincrement())
-  userId            Int
-  projectId         Int
-  canLogTime        Boolean       @default(true)
-  hourlyRate        Decimal?
-  currency          CurrencyCode?
-  readyForInvoicing Boolean       @default(false)
-
-  user    User    @relation(fields: [userId], references: [id])
-  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, projectId])
-}
-
-model Client {
-  companyId    Int
-  company      Company  @relation(fields: [companyId], references: [id])
-  /// Unique shorthand code (e.g. C0001)
-  code         String?  @unique
-  id           Int      @id @default(autoincrement())
-  ownerId      Int
-  name         String
-  contactEmail String?
-  phone        String?
-  address      String?
-  notes        String?
-  createdAt    DateTime @default(now())
-  /// Default AR account for this client
-  accountId    Int?
-  account      Account? @relation("ClientAccount", fields: [accountId], references: [id])
-
-  // relations
-  owner          User            @relation(fields: [ownerId], references: [id])
-  projects       Project[]
-  tasks          Task[]       @relation("ClientTasks")
-  trustAccounts  TrustAccount[]
-  expenseCashLedgers ExpenseCashLedger[]
-  invoices       Invoice[]
-  documents      Document[]
-  reportAccesses ReportAccess[]
-  approvalScopes ApprovalScope[]
-}
-
-model Project {
-  companyId       Int
-  company         Company       @relation(fields: [companyId], references: [id])
-  /// Unique shorthand code (e.g. P0001-01)
-  code            String?
-  id              Int           @id @default(autoincrement())
-  ownerId         Int
-  clientId        Int
-  name            String
-  description     String?
-  /// Revenue account for this project
-  accountId       Int?
-  account         Account?      @relation("ProjectAccount", fields: [accountId], references: [id])
-  hourlyRate      Decimal?
-  advanceAmount   Decimal?
-  advanceCurrency CurrencyCode?
-  // Billing
-  billingType     BillingType   @default(HOURS)
-  rateSource      RateSource?
-  fixedFee        Decimal?
-  billingCurrency CurrencyCode?
-  status          ProjectStatus @default(OPEN)
-  createdAt       DateTime      @default(now())
-
-  // relations
-  client            Client              @relation(fields: [clientId], references: [id], onDelete: Cascade)
-  owner             User                @relation(fields: [ownerId], references: [id])
-  timeEntries       TimeEntry[]
-  expenses          Expense[]
-  documents         Document[]
-  assignments       ProjectAssignment[]
-  tasks             Task[]         @relation("ProjectTasks")
-  groupMemberships  GroupMembership[]
-  reportAccesses    ReportAccess[]
-  approvalScopes    ApprovalScope[]
-  invoices          Invoice[]
-  advancePayments   AdvancePayment[]
-  trustAccounts     TrustAccount[]
-  trustTransactions TrustTransaction[]
-  expenseCashLedgers ExpenseCashLedger[]
-  incomeCashLedgers IncomeCashLedger[] @relation("ProjectIncomeLedger")
-  officeExpenses    OfficeExpense[]
-  attachments       ProjectAttachment[]
-
-  @@unique([companyId, code])
-}
-
-model TimeEntry {
-  id           Int       @id @default(autoincrement())
-  projectId    Int
-  userId       Int
-  startTs      DateTime
-  endTs        DateTime?
-  durationMins Int
-  /// linked to invoice when billed
-  invoiceId    Int?
-  invoiced     Boolean   @default(false)
-  notes        String?
-  billable     Boolean   @default(true)
-
-  // approval workflow
-  managerApproved    Boolean @default(false)
-  accountantApproved Boolean @default(false)
-  managerId          Int?
-  accountantId       Int?
-
-  project    Project  @relation(fields: [projectId], references: [id])
-  invoice    Invoice? @relation(fields: [invoiceId], references: [id])
-  user       User     @relation(fields: [userId], references: [id])
-  manager    User?    @relation("managerApproval", fields: [managerId], references: [id])
-  accountant User?    @relation("accountantApproval", fields: [accountantId], references: [id])
-}
-
-model Expense {
-  id          Int           @id @default(autoincrement())
-  projectId   Int
-  userId      Int
-  amount      Decimal
-  currency    CurrencyCode?
-  description String
-  incurredOn  DateTime
-  billable    Boolean       @default(true)
-  /// linked to invoice when billed
-  invoiceId   Int?
-  invoiced    Boolean       @default(false)
-  approved    Boolean       @default(false)
-  receiptUrl  String?
-  receiptFile Bytes?
-  receiptMime String?
-
-  project Project  @relation(fields: [projectId], references: [id])
-  invoice Invoice? @relation(fields: [invoiceId], references: [id])
-  user    User     @relation(fields: [userId], references: [id])
-}
-
-model Invoice {
-  bankId        Int?
-  bank          BankAccount?    @relation(fields: [bankId], references: [id])
-  companyId     Int
-  company       Company         @relation(fields: [companyId], references: [id])
-  id            Int             @id @default(autoincrement())
-  projectId     Int?
-  clientId      Int
-  invoiceNumber String          @unique
-  issueDate     DateTime
-  dueDate       DateTime
-  status        InvoiceStatus   @default(DRAFT)
-  subtotal      Decimal
-  discount      Decimal         @default(0)
-  tax           Decimal?        @default(0)
-  trustDeducted Decimal         @default(0)
-  total         Decimal
-  language      InvoiceLanguage @default(EN)
-  currency      CurrencyCode    @default(USD)
-  createdAt     DateTime        @default(now())
-
-  project Project? @relation(fields: [projectId], references: [id])
-
-  client            Client             @relation(fields: [clientId], references: [id], onDelete: Cascade)
-  items             InvoiceItem[]
-  timeEntries       TimeEntry[]
-  expenses          Expense[]
-  payments          Payment[]
-  arPosted          Boolean            @default(false)
-  trustTransactions TrustTransaction[]
-}
-
-model InvoiceItem {
-  id          Int      @id @default(autoincrement())
-  invoiceId   Int
-  itemType    ItemType
-  refId       Int?
-  description String
-  quantity    Decimal
-  unitPrice   Decimal
-  lineTotal   Decimal
-
-  invoice Invoice @relation(fields: [invoiceId], references: [id])
-}
-
-model Document {
-  id         Int      @id @default(autoincrement())
-  projectId  Int?
-  clientId   Int?
-  uploaderId Int
-  filename   String
-  mimeType   String
-  storageKey String
-  sizeBytes  Int
-  createdAt  DateTime @default(now())
-
-  project     Project?             @relation(fields: [projectId], references: [id])
-  client      Client?              @relation(fields: [clientId], references: [id], onDelete: Cascade)
-  uploader    User                 @relation(name: "uploadedDocs", fields: [uploaderId], references: [id])
-  permissions DocumentPermission[]
-}
-
-// Trust accounting
-
 enum TrustTxnType {
-  CREDIT // deposit to trust
-  DEBIT // withdrawal or application to invoice
+  CREDIT
+  DEBIT
 }
-
-model TrustAccount {
-  id          Int          @id @default(autoincrement())
-  clientId    Int
-  projectId   Int?
-  balance     Decimal      @default(0)
-  accountType AccountType  @default(TRUST)
-  currency    CurrencyCode @default(USD)
-  createdAt   DateTime     @default(now())
-
-  client       Client             @relation(fields: [clientId], references: [id], onDelete: Cascade)
-  project      Project?           @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  transactions TrustTransaction[]
-
-  @@unique([clientId, projectId, currency, accountType])
-}
-
-model TrustTransaction {
-  id             Int          @id @default(autoincrement())
-  trustAccountId Int
-  projectId      Int?
-  txnType        TrustTxnType
-  amount         Decimal
-  description    String?
-  txnDate        DateTime     @default(now())
-  invoiceId      Int?
-
-  trustAccount TrustAccount @relation(fields: [trustAccountId], references: [id], onDelete: Cascade)
-  project      Project?     @relation(fields: [projectId], references: [id])
-  invoice      Invoice?     @relation(fields: [invoiceId], references: [id])
-}
-
-model DocumentPermission {
-  docId       Int
-  userId      Int
-  canView     Boolean @default(true)
-  canDownload Boolean @default(true)
-  canDelete   Boolean @default(false)
-
-  document Document @relation(fields: [docId], references: [id])
-  user     User     @relation(name: "userPermissions", fields: [userId], references: [id])
-
-  @@id([docId, userId])
-  @@map("document_permissions")
-}
-
-model AdvancePayment {
-  id        Int          @id @default(autoincrement())
-  projectId Int
-  amount    Decimal
-  currency  CurrencyCode
-
-  accountType AccountType  @default(TRUST)
-  consumed    Decimal      @default(0)
-  paidOn      DateTime     @default(now())
-  notes       String?
-  bankId      Int?
-  bank        BankAccount? @relation(fields: [bankId], references: [id])
-
-  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
-}
-
-// Banking ------------------------------------------------------------
-model BankAccount {
-  id                Int                @id @default(autoincrement())
-  companyId         Int
-  company           Company            @relation(fields: [companyId], references: [id])
-  incomeCashLedgers IncomeCashLedger[]
-  name              String
-  balance           Decimal            @default(0)
-  officeExpenses    OfficeExpense[]
-  currency          CurrencyCode       @default(USD)
-  createdAt         DateTime           @default(now())
-
-  advancePayments  AdvancePayment[]
-  bankTransactions BankTransaction[]
-  invoices         Invoice[]
-}
-
-// Project Attachments ------------------------------------------------------------
 
 enum AttachmentType {
   POWER_OF_ATTORNEY
   CONTRACT
   OTHER
-}
-
-model ProjectAttachment {
-  id           Int            @id @default(autoincrement())
-  projectId    Int
-  type         AttachmentType @default(OTHER)
-  url          String
-  uploadedById Int?
-  createdAt    DateTime       @default(now())
-
-  project    Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  uploadedBy User?   @relation(fields: [uploadedById], references: [id])
-}
-
-// Bank Transactions ------------------------------------------------------------
-model BankTransaction {
-  id        Int          @id @default(autoincrement())
-  bankId    Int
-  bank      BankAccount  @relation(fields: [bankId], references: [id])
-  companyId Int?
-  company   Company?     @relation(fields: [companyId], references: [id])
-  amount    Decimal
-  currency  CurrencyCode
-  memo      String?
-  createdAt DateTime     @default(now())
-}
-
-// HR Models ------------------------------------------------------------
-
-model Employee {
-  id               Int            @id @default(autoincrement())
-  name             String
-  email            String?        @unique
-  status           EmployeeStatus @default(ACTIVE)
-  department       String?
-  hireDate         DateTime?
-  leaveBalanceDays Decimal        @default(0)
-  userId           Int?           @unique
-  createdAt        DateTime       @default(now())
-
-  // relations
-  salaries         Salary[]
-  leaves           LeaveRequest[]
-  attendances      Attendance[]
-  user             User?             @relation("userEmployee", fields: [userId], references: [id])
-  payslips         Payslip[]
-  penalties        Penalty[]         @relation("EmployeePenalties")
-  // payroll relations
-  payrollItems     PayrollItem[]
-  salaryDeductions SalaryDeduction[]
-}
-
-model Salary {
-  id            Int          @id @default(autoincrement())
-  employeeId    Int
-  amount        Decimal
-  currency      CurrencyCode @default(USD)
-  effectiveFrom DateTime
-
-  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
-
-  @@index([employeeId, effectiveFrom])
 }
 
 enum LeaveType {
@@ -540,383 +777,19 @@ enum LeaveStatus {
   REJECTED
 }
 
-model Penalty {
-  id          Int          @id @default(autoincrement())
-  employeeId  Int
-  date        DateTime     @default(now())
-  amount      Decimal
-  currency    CurrencyCode @default(USD)
-  reason      String?
-  createdById Int
-
-  employee  Employee @relation("EmployeePenalties", fields: [employeeId], references: [id], onDelete: Cascade)
-  createdBy User     @relation("UserCreatedPenalties", fields: [createdById], references: [id])
-
-  @@index([employeeId, date])
-}
-
-model LeaveRequest {
-  id         Int         @id @default(autoincrement())
-  employeeId Int
-  startDate  DateTime
-  endDate    DateTime
-  type       LeaveType
-  status     LeaveStatus @default(PENDING)
-  reason     String?
-  createdAt  DateTime    @default(now())
-
-  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
-
-  @@index([employeeId, startDate, endDate])
-}
-
-model Attendance {
-  id         Int       @id @default(autoincrement())
-  employeeId Int
-  clockIn    DateTime  @default(now())
-  clockOut   DateTime?
-  createdAt  DateTime  @default(now())
-
-  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
-
-  @@index([employeeId, clockIn])
-}
-
-model Notification {
-  id        Int      @id @default(autoincrement())
-  userId    Int
-  type      String
-  message   String
-  read      Boolean  @default(false)
-  createdAt DateTime @default(now())
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId, read])
-}
-
-// Permissions
-model Permission {
-  id   Int    @id @default(autoincrement())
-  code String @unique
-  name String
-
-  users UserPermission[]
-}
-
-model UserPermission {
-  userId       Int
-  permissionId Int
-  allowed      Boolean @default(true)
-  // scoped selections (0 = All)
-  clientIds    Json    @default("[]")
-  projectIds   Json    @default("[]")
-  itemIds      Json    @default("[]")
-  lawyerIds    Json    @default("[]")
-
-  user       User       @relation(fields: [userId], references: [id])
-  permission Permission @relation(fields: [permissionId], references: [id])
-
-  @@id([userId, permissionId])
-}
-
-// -----------------------------------------
-// Advanced Permissions & Group Management
-// -----------------------------------------
-
-// Office expense model
-model OfficeExpense {
-  id        Int          @id @default(autoincrement())
-  companyId Int
-  bankId    Int
-  amount    Decimal
-  currency  CurrencyCode @default(USD)
-  notes     String?
-  projectId Int?
-  project   Project?     @relation(fields: [projectId], references: [id])
-  createdAt DateTime     @default(now())
-
-  company Company     @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  bank    BankAccount @relation(fields: [bankId], references: [id])
-}
-
-// Income cash ledger ---------------------------------------
-
 enum IncomeCashSource {
   TRUST_DEPOSIT
   INVOICE_PAYMENT
   OFFICE_EXPENSE
 }
 
-model IncomeCashLedger {
-  id        Int              @id @default(autoincrement())
-  companyId Int
-  bankId    Int?
-  projectId Int?
-  source    IncomeCashSource
-  amount    Decimal
-  currency  CurrencyCode     @default(USD)
-  notes     String?
-  createdAt DateTime         @default(now())
-
-  company Company      @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  bank    BankAccount? @relation(fields: [bankId], references: [id])
-  project Project?     @relation("ProjectIncomeLedger", fields: [projectId], references: [id])
-
-  @@index([companyId, createdAt])
-}
-
-// Expense cash ledger ---------------------------------------
-model ExpenseCashLedger {
-  id        Int      @id @default(autoincrement())
-  companyId Int
-  clientId  Int?
-  projectId Int?
-  amount    Decimal
-  currency  CurrencyCode @default(USD)
-  notes     String?
-  createdAt DateTime @default(now())
-
-  company Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  client  Client?  @relation(fields: [clientId], references: [id])
-  project Project? @relation(fields: [projectId], references: [id])
-
-  @@index([companyId, createdAt])
-}
-
-// -----------------------------------------------------------
-
 enum ApprovalType {
   TIME
   EXPENSE
 }
-
-model Group {
-  id   Int    @id @default(autoincrement())
-  name String @unique
-
-  members GroupMembership[]
-}
-
-model GroupMembership {
-  id        Int     @id @default(autoincrement())
-  userId    Int
-  groupId   Int
-  isManager Boolean @default(false)
-
-  user      User     @relation(fields: [userId], references: [id])
-  group     Group    @relation(fields: [groupId], references: [id])
-  Project   Project? @relation(fields: [projectId], references: [id])
-  projectId Int?
-
-  @@unique([userId, groupId])
-}
-
-// Which reports a user can access, optionally scoped to a specific client/project/lawyer
-model ReportAccess {
-  id         Int      @id @default(autoincrement())
-  userId     Int
-  reportCode String
-  clientId   Int?
-  projectId  Int?
-  user       User     @relation(fields: [userId], references: [id])
-  client     Client?  @relation(fields: [clientId], references: [id])
-  project    Project? @relation(fields: [projectId], references: [id])
-}
-
-// Which approvals a user can perform (time/expense), optionally scoped
-model ManagerLawyer {
-  managerId Int
-  lawyerId  Int
-
-  manager User @relation("managerLawyers", fields: [managerId], references: [id])
-  lawyer  User @relation("lawyerManager", fields: [lawyerId], references: [id])
-
-  @@id([managerId, lawyerId])
-}
-
-model ApprovalScope {
-  id        Int          @id @default(autoincrement())
-  userId    Int
-  type      ApprovalType
-  clientId  Int?
-  projectId Int?
-  user      User         @relation(fields: [userId], references: [id])
-  client    Client?      @relation(fields: [clientId], references: [id])
-  project   Project?     @relation(fields: [projectId], references: [id])
-}
-
-model PayrollRun {
-  id          Int       @id @default(autoincrement())
-  month       Int // 1-12
-  year        Int
-  processedAt DateTime?
-  approvedAt  DateTime?
-  createdBy   Int
-  createdAt   DateTime  @default(now())
-
-  payslips Payslip[]
-  creator  User      @relation("runCreator", fields: [createdBy], references: [id])
-
-  @@index([year, month])
-}
-
-model Payslip {
-  id           Int      @id @default(autoincrement())
-  payrollRunId Int
-  employeeId   Int
-  baseSalary   Decimal
-  overtimePay  Decimal  @default(0)
-  deductions   Decimal  @default(0)
-  netPay       Decimal
-  pdfUrl       String?
-  createdAt    DateTime @default(now())
-
-  payrollRun PayrollRun @relation(fields: [payrollRunId], references: [id], onDelete: Cascade)
-  employee   Employee   @relation(fields: [employeeId], references: [id], onDelete: Cascade)
-
-  @@index([employeeId, payrollRunId])
-}
-
-model Payment {
-  id           Int      @id @default(autoincrement())
-  invoiceId    Int
-  amount       Decimal
-  paidOn       DateTime
-  gateway      String?
-  txnReference String?
-
-  invoice Invoice @relation(fields: [invoiceId], references: [id])
-}
-
-// ---------------- Accounting (General Ledger) ----------------
-model Account {
-  companyId Int
-  company   Company     @relation(fields: [companyId], references: [id])
-  id        Int         @id @default(autoincrement())
-  code      String
-  name      String
-  type      AccountType
-
-  // relations back to clients/projects
-  clients  Client[]  @relation("ClientAccount")
-  projects Project[] @relation("ProjectAccount")
-
-  lines TransactionLine[]
-
-  @@unique([companyId, code])
-}
-
-model Transaction {
-  id        Int      @id @default(autoincrement())
-  date      DateTime @default(now())
-  memo      String?
-  posted    Boolean  @default(true)
-  createdBy Int?
-
-  creator User?             @relation("UserTransactions", fields: [createdBy], references: [id])
-  lines   TransactionLine[]
-}
-
-model Setting {
-  key   String @id
-  value String
-}
-
-model TransactionLine {
-  id            Int          @id @default(autoincrement())
-  transactionId Int
-  accountId     Int
-  debit         Decimal      @default(0)
-  credit        Decimal      @default(0)
-  currency      CurrencyCode @default(USD)
-
-  transaction Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
-  account     Account     @relation(fields: [accountId], references: [id], onDelete: Cascade)
-}
-
-// ------------------------------------------------------------
-// Payroll & Deductions
-// ------------------------------------------------------------
 
 enum PayrollStatus {
   DRAFT
   HR_APPROVED
   ACC_APPROVED
 }
-
-model SalaryDeduction {
-  id            Int          @id @default(autoincrement())
-  employeeId    Int
-  amount        Decimal
-  currency      CurrencyCode
-  reason        String?
-  issuedOn      DateTime     @default(now())
-  createdById   Int
-  payrollItemId Int?
-
-  employee    Employee     @relation(fields: [employeeId], references: [id])
-  payrollItem PayrollItem? @relation("ItemDeductions", fields: [payrollItemId], references: [id])
-  creator     User         @relation("UserCreatedDeductions", fields: [createdById], references: [id])
-}
-
-model PayrollBatch {
-  id            Int           @id @default(autoincrement())
-  companyId     Int
-  company       Company       @relation(fields: [companyId], references: [id])
-  month         Int
-  year          Int
-  status        PayrollStatus @default(DRAFT)
-  createdAt     DateTime      @default(now())
-  hrApprovedAt  DateTime?
-  accApprovedAt DateTime?
-  createdById   Int
-  creator       User          @relation("payrollBatchesCreated", fields: [createdById], references: [id])
-  items         PayrollItem[]
-
-  @@unique([companyId, month, year])
-}
-
-model PayrollItem {
-  id              Int     @id @default(autoincrement())
-  batchId         Int
-  employeeId      Int
-  grossSalary     Decimal
-  totalDeductions Decimal
-  netSalary       Decimal
-
-  batch            PayrollBatch      @relation(fields: [batchId], references: [id])
-  employee         Employee          @relation(fields: [employeeId], references: [id])
-  salaryDeductions SalaryDeduction[] @relation("ItemDeductions")
-}
-
-// ===== Task Management =====
-
-enum TaskStatus {
-  PENDING
-  IN_PROGRESS
-  DONE
-  REJECTED
-}
-
-model Task {
-  id          Int        @id @default(autoincrement())
-  title       String
-  description String?
-  clientId    Int?
-  projectId   Int?
-  assignerId  Int       // created by partner / managing partner / managing lawyer
-  assigneeId  Int       // lawyer assigned
-  dueDate     DateTime
-  status      TaskStatus @default(PENDING)
-  createdAt   DateTime   @default(now())
-
-  client   Client?  @relation("ClientTasks", fields: [clientId], references: [id])
-  project  Project? @relation("ProjectTasks", fields: [projectId], references: [id])
-  assigner User     @relation("taskAssigner", fields: [assignerId], references: [id])
-  assignee User     @relation("taskAssignee", fields: [assigneeId], references: [id])
-
-  @@index([assigneeId, dueDate])
-}
-
-
