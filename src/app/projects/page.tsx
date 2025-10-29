@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { toast, Toaster } from "react-hot-toast";
 import Link from "next/link";
-import { getAuth } from "@/lib/auth";
+import { toast, Toaster } from "react-hot-toast";
 import { fetchAuth } from "@/lib/fetchAuth";
+import { getAuth } from "@/lib/auth";
 
 interface Client {
   id: number;
@@ -35,7 +35,7 @@ export default function ProjectsPage() {
 
   const router = useRouter();
 
-  /* -------- helpers -------- */
+  /* ---------- helpers ---------- */
   const fetchProjects = async () => {
     try {
       const res = await fetchAuth("/api/projects");
@@ -47,14 +47,78 @@ export default function ProjectsPage() {
       setLoading(false);
     }
   };
-  /* … startEdit / saveEdit / delete handlers كما كانت … */
 
-  useEffect(() => { fetchProjects(); }, []);
+  const startEdit = (p: Project) => {
+    setEditingId(p.id);
+    setTempName(p.name);
+    setTempStatus(p.status);
+    setTempAmount(p.advanceAmount !== null ? String(p.advanceAmount) : "");
+    setTempCurrency(p.advanceCurrency ?? "USD");
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setTempName("");
+  };
+
+  const saveEdit = async (id: number) => {
+    if (!tempName.trim()) return;
+    try {
+      const res = await fetch(`/api/projects/${id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${getAuth()}`,
+        },
+        body: JSON.stringify({
+          name: tempName.trim(),
+          status: tempStatus,
+          advanceAmount: tempAmount ? parseFloat(tempAmount) : null,
+          advanceCurrency: tempCurrency,
+        }),
+      });
+      if (!res.ok) throw new Error("Failed update");
+      toast.success("Project updated");
+      setProjects((prev) =>
+        prev.map((p) =>
+          p.id === id
+            ? {
+                ...p,
+                name: tempName.trim(),
+                status: tempStatus,
+                advanceAmount: tempAmount ? parseFloat(tempAmount) : null,
+                advanceCurrency: tempCurrency,
+              }
+            : p
+        )
+      );
+    } catch {
+      toast.error("Update failed");
+    } finally {
+      cancelEdit();
+    }
+  };
+
+  const deleteProject = async (id: number) => {
+    if (!confirm("Delete this project?")) return;
+    try {
+      const res = await fetchAuth(`/api/projects/${id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error();
+      toast.success("Deleted");
+      fetchProjects();
+    } catch {
+      toast.error("Deletion failed");
+    }
+  };
+  /* -------------------------------- */
+
+  useEffect(() => {
+    fetchProjects();
+  }, []);
 
   return (
     <div className="container mx-auto p-6">
       <Toaster />
-
       {/* header */}
       <div className="flex justify-between items-center mb-6">
         <div>
@@ -80,11 +144,20 @@ export default function ProjectsPage() {
             <table className="min-w-full">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Client</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Code</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Project Name</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Advance Payment</th>
+                  {[
+                    "Client",
+                    "Code",
+                    "Project Name",
+                    "Status",
+                    "Advance Payment",
+                  ].map((h) => (
+                    <th
+                      key={h}
+                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase"
+                    >
+                      {h}
+                    </th>
+                  ))}
                   <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase" />
                 </tr>
               </thead>
@@ -95,25 +168,143 @@ export default function ProjectsPage() {
                     <td className="px-6 py-4 font-mono text-sm">{p.code}</td>
                     <td className="px-6 py-4">
                       {editingId === p.id ? (
-                        <input value={tempName} onChange={(e)=>setTempName(e.target.value)} className="border rounded px-2 py-1 text-sm w-full" />
+                        <input
+                          value={tempName}
+                          onChange={(e) => setTempName(e.target.value)}
+                          className="border rounded px-2 py-1 text-sm w-full"
+                        />
                       ) : (
-                        <Link href={`/projects/${p.id}`} className="text-blue-600 hover:underline">{p.name}</Link>
+                        <Link
+                          href={`/projects/${p.id}`}
+                          className="text-blue-600 hover:underline"
+                        >
+                          {p.name}
+                        </Link>
                       )}
                     </td>
-                    {/* status cell */}
-                    {/* advance payment cell */}
-                    {/* actions cell كما كانت (Edit / Delete) */}
+                    {/* status */}
+                    <td className="px-6 py-4">
+                      {editingId === p.id ? (
+                        <select
+                          value={tempStatus}
+                          onChange={(e) => setTempStatus(e.target.value)}
+                          className="border rounded px-2 py-1 text-xs"
+                        >
+                          {["OPEN", "IN_PROGRESS", "CLOSED"].map((s) => (
+                            <option key={s}>{s}</option>
+                          ))}
+                        </select>
+                      ) : (
+                        <span
+                          className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                            p.status === "OPEN"
+                              ? "bg-green-100 text-green-800"
+                              : p.status === "CLOSED"
+                              ? "bg-red-100 text-red-800"
+                              : "bg-gray-100 text-gray-800"
+                          }`}
+                        >
+                          {p.status}
+                        </span>
+                      )}
+                    </td>
+                    {/* advance */}
+                    <td className="px-6 py-4">
+                      {editingId === p.id ? (
+                        <div className="flex gap-2 items-center">
+                          <input
+                            type="number"
+                            step="0.01"
+                            value={tempAmount}
+                            onChange={(e) => setTempAmount(e.target.value)}
+                            className="border rounded px-2 py-1 w-24 text-sm"
+                          />
+                          <select
+                            value={tempCurrency}
+                            onChange={(e) => setTempCurrency(e.target.value)}
+                            className="border rounded px-1 py-1 text-xs"
+                          >
+                            {[
+                              "USD",
+                              "EUR",
+                              "GBP",
+                              "SAR",
+                              "EGP",
+                              "AED",
+                              "QAR",
+                              "KWD",
+                              "OMR",
+                              "JPY",
+                              "CNY",
+                              "INR",
+                            ].map((c) => (
+                              <option key={c}>{c}</option>
+                            ))}
+                          </select>
+                        </div>
+                      ) : p.advanceTotals && p.advanceTotals.length ? (
+                        p.advanceTotals
+                          .map((t) => `${t.total} ${t.currency}`)
+                          .join(", ")
+                      ) : p.advanceAmount !== null ? (
+                        `${p.advanceAmount} ${p.advanceCurrency ?? ""}`
+                      ) : (
+                        "—"
+                      )}
+                    </td>
+
+                    {/* actions */}
+                    <td className="px-6 py-4 text-right text-sm">
+                      {editingId === p.id ? (
+                        <>
+                          <button
+                            onClick={() => saveEdit(p.id)}
+                            className="text-green-600 hover:underline mr-2"
+                          >
+                            Save
+                          </button>
+                          <button
+                            onClick={cancelEdit}
+                            className="text-gray-600 hover:underline"
+                          >
+                            Cancel
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <button
+                            onClick={() => startEdit(p)}
+                            className="text-blue-600 hover:underline mr-4"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => deleteProject(p.id)}
+                            className="text-red-600 hover:underline"
+                          >
+                            Delete
+                          </button>
+                        </>
+                      )}
+                    </td>
                   </tr>
                 ))}
               </tbody>
             </table>
-            {projects.length === 0 && <p className="text-center py-6 text-sm">No projects found.</p>}
+
+            {projects.length === 0 && (
+              <p className="text-center py-6 text-sm text-gray-600">
+                No projects found.
+              </p>
+            )}
           </div>
         </div>
       )}
 
       <p className="mt-6 text-sm text-gray-600">
-        <Link href="/dashboard" className="text-blue-600 underline">← Back to Dashboard</Link>
+        <Link href="/dashboard" className="text-blue-600 underline">
+          ← Back to Dashboard
+        </Link>
       </p>
     </div>
   );
