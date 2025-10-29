@@ -1,0 +1,11 @@
+-- add Notification model
+CREATE TABLE IF NOT EXISTS "Notification" (
+  "id" SERIAL PRIMARY KEY,
+  "userId" INT NOT NULL,
+  "message" TEXT NOT NULL,
+  "read" BOOLEAN NOT NULL DEFAULT FALSE,
+  "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT "Notification_userId_fkey"
+    FOREIGN KEY ("userId") REFERENCES "User"("id")
+    ON DELETE CASCADE ON UPDATE CASCADE
+);
