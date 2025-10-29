@@ -106,8 +106,7 @@ export default function TasksSection({ projectId }: Props) {
       <Toaster />
       <div className="flex justify-between items-center mb-2">
         <h2 className="font-semibold">Project Tasks</h2>
-        <button onClick={() => setShowModal(true)} className="bg-blue-600 text-white px-3 py-1 rounded text-sm">Add Task</button>
-      </div>
+              </div>
       {loading ? (
         <p className="text-sm text-gray-600">Loading…</p>
       ) : tasks.length === 0 ? (
