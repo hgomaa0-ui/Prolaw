@@ -1,109 +1,5 @@
-2025-09-15T21:07:31.267Z [info] withCompany token present companyId 1
-2025-09-15T21:07:31.469Z [info] prisma:error 
-Invalid `prisma.attendance.createMany()` invocation:
+"use client";
 
-{
-  data: [
-    {
-      employeeId: 2,
-      clockIn: new Date("2025-09-14T06:00:00.000Z"),
-      clockOut: new Date("2025-09-14T14:30:00.000Z"),
-      companyId: 1
-    },
-    {
-      employeeId: 2,
-      clockIn: new Date("2025-09-15T20:34:15.197Z"),
-      clockOut: undefined,
-      companyId: 1
-    },
-    {
-      employeeId: 1,
-      clockIn: new Date("2025-09-15T20:34:55.656Z"),
-      clockOut: undefined,
-      companyId: 1
-    },
-    {
-      employeeId: 2,
-      clockIn: new Date("2025-09-13T06:00:00.000Z"),
-      clockOut: new Date("2025-09-13T14:30:00.000Z"),
-      companyId: 1
-    }
-  ]
-}
-
-Unknown argument `companyId`. Available options are marked with ?.
-2025-09-15T21:07:31.475Z [error] ⨯ Error [PrismaClientValidationError]: 
-Invalid `prisma.attendance.createMany()` invocation:
-
-{
-  data: [
-    {
-      employeeId: 2,
-      clockIn: new Date("2025-09-14T06:00:00.000Z"),
-      clockOut: new Date("2025-09-14T14:30:00.000Z"),
-      companyId: 1
-    },
-    {
-      employeeId: 2,
-      clockIn: new Date("2025-09-15T20:34:15.197Z"),
-      clockOut: undefined,
-      companyId: 1
-    },
-    {
-      employeeId: 1,
-      clockIn: new Date("2025-09-15T20:34:55.656Z"),
-      clockOut: undefined,
-      companyId: 1
-    },
-    {
-      employeeId: 2,
-      clockIn: new Date("2025-09-13T06:00:00.000Z"),
-      clockOut: new Date("2025-09-13T14:30:00.000Z"),
-      companyId: 1
-    }
-  ]
-}
-
-Unknown argument `companyId`. Available options are marked with ?.
-    at async (.next/server/app/api/attendance/import/route.js:1:3780) {
-  clientVersion: '6.11.1'
-}
-2025-09-15T21:07:31.476Z [error] ⨯ Error [PrismaClientValidationError]: 
-Invalid `prisma.attendance.createMany()` invocation:
-
-{
-  data: [
-    {
-      employeeId: 2,
-      clockIn: new Date("2025-09-14T06:00:00.000Z"),
-      clockOut: new Date("2025-09-14T14:30:00.000Z"),
-      companyId: 1
-    },
-    {
-      employeeId: 2,
-      clockIn: new Date("2025-09-15T20:34:15.197Z"),
-      clockOut: undefined,
-      companyId: 1
-    },
-    {
-      employeeId: 1,
-      clockIn: new Date("2025-09-15T20:34:55.656Z"),
-      clockOut: undefined,
-      companyId: 1
-    },
-    {
-      employeeId: 2,
-      clockIn: new Date("2025-09-13T06:00:00.000Z"),
-      clockOut: new Date("2025-09-13T14:30:00.000Z"),
-      companyId: 1
-    }
-  ]
-}
-
-Unknown argument `companyId`. Available options are marked with ?.
-    at async (.next/server/app/api/attendance/import/route.js:1:3780) {
-  clientVersion: '6.11.1'
-}"use client";
 import React, { useState, useEffect } from "react";
 import { getAuth } from "@/lib/auth";
 
@@ -120,18 +16,26 @@ export default function AttendancePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState({ from: "", to: "" });
-  const [empOptions, setEmpOptions] = useState<{id:number,name:string}[]>([]);
-  const [form, setForm] = useState({ employeeId: '', clockIn: '', clockOut: '' });
+  const [empOptions, setEmpOptions] = useState<{ id: number; name: string }[]>(
+    []
+  );
+  const [form, setForm] = useState({
+    employeeId: "",
+    clockIn: "",
+    clockOut: "",
+  });
 
   const token = getAuth();
 
+  /* ---------- helpers ---------- */
   const fetchData = async () => {
     try {
       const url = `/api/attendance?from=${filter.from}&to=${filter.to}`;
-      const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+      const res = await fetch(url, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       if (!res.ok) throw new Error(await res.text());
-      const json = await res.json();
-      setRecords(json);
+      setRecords(await res.json());
     } catch (e: any) {
       setError(e.message);
     } finally {
@@ -139,18 +43,23 @@ export default function AttendancePage() {
     }
   };
 
+  /* initial load */
   useEffect(() => {
     fetchData();
-    // fetch employees list
-    fetch('/api/employees', { headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) } })
-      .then(r=>r.json()).then((arr)=> setEmpOptions(arr.map((e:any)=>({id:e.id,name:e.name}))))
-      .catch(()=>{});
+    fetch("/api/employees", {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    })
+      .then((r) => r.json())
+      .then((arr) =>
+        setEmpOptions(arr.map((e: any) => ({ id: e.id, name: e.name })))
+      )
+      .catch(() => {});
   }, []);
 
   const hoursDiff = (start: string, end?: string) => {
     if (!end) return "—";
     const diffMs = new Date(end).getTime() - new Date(start).getTime();
-    return (diffMs / 1000 / 60 / 60).toFixed(2);
+    return (diffMs / 36e5).toFixed(2);
   };
 
   const totalHours = records.reduce((sum, r) => {
@@ -160,69 +69,159 @@ export default function AttendancePage() {
     return sum;
   }, 0);
 
+  /* -------------------------------- */
+
   return (
     <div className="container mx-auto max-w-6xl p-8 space-y-6">
       <h1 className="text-3xl font-bold">Attendance</h1>
 
+      {/* filter */}
       <div className="flex flex-wrap items-end gap-4 border p-4 rounded">
         <div>
           <label className="block text-sm">From</label>
-          <input type="date" value={filter.from} onChange={(e)=>setFilter({...filter,from:e.target.value})} className="rounded border px-3 py-2" />
+          <input
+            type="date"
+            value={filter.from}
+            onChange={(e) => setFilter({ ...filter, from: e.target.value })}
+            className="rounded border px-3 py-2"
+          />
         </div>
         <div>
           <label className="block text-sm">To</label>
-          <input type="date" value={filter.to} onChange={(e)=>setFilter({...filter,to:e.target.value})} className="rounded border px-3 py-2" />
+          <input
+            type="date"
+            value={filter.to}
+            onChange={(e) => setFilter({ ...filter, to: e.target.value })}
+            className="rounded border px-3 py-2"
+          />
         </div>
-        <button onClick={fetchData} className="rounded bg-gray-600 px-4 py-2 text-white">Apply</button>
-        <button onClick={()=>{
-            const q=`from=${filter.from}&to=${filter.to}`;
-            window.location.href=`/api/attendance/export?${q}`;
-        }} className="rounded bg-blue-600 px-4 py-2 text-white">Export CSV</button>
+        <button
+          onClick={fetchData}
+          className="rounded bg-gray-600 px-4 py-2 text-white"
+        >
+          Apply
+        </button>
+        <button
+          onClick={() => {
+            const q = `from=${filter.from}&to=${filter.to}`;
+            window.location.href = `/api/attendance/export?${q}`;
+          }}
+          className="rounded bg-blue-600 px-4 py-2 text-white"
+        >
+          Export CSV
+        </button>
         <label className="inline-flex items-center gap-2 cursor-pointer text-white bg-green-600 px-4 py-2 rounded">
           Import CSV
-          <input type="file" accept=".csv" className="hidden" onChange={async(e)=>{
-            const file=e.target.files?.[0];
-            if(!file) return;
-            const fd=new FormData();fd.append('file',file);
-            const res=await fetch('/api/attendance/import',{method:'POST',body:fd});
-            if(res.ok){alert('Imported');fetchData();}else{alert(await res.text());}
-            e.target.value='';
-          }} />
+          <input
+            type="file"
+            accept=".csv"
+            className="hidden"
+            onChange={async (e) => {
+              const file = e.target.files?.[0];
+              if (!file) return;
+              const fd = new FormData();
+              fd.append("file", file);
+              const res = await fetch("/api/attendance/import", {
+                method: "POST",
+                body: fd,
+              });
+              if (res.ok) {
+                alert("Imported");
+                fetchData();
+              } else {
+                alert(await res.text());
+              }
+              e.target.value = "";
+            }}
+          />
         </label>
-        <div className="ml-auto text-sm font-medium">Total Hours: {totalHours.toFixed(2)}</div>
+        <div className="ml-auto text-sm font-medium">
+          Total Hours: {totalHours.toFixed(2)}
+        </div>
       </div>
 
-      {/* Add Record form */}
+      {/* manual add form */}
       <div className="border p-4 rounded mb-6 space-y-3 bg-gray-50">
         <h2 className="font-medium">Add Record (manual)</h2>
         <div className="flex flex-wrap items-end gap-4">
           <div>
             <label className="block text-sm">Employee</label>
-            <select value={form.employeeId} onChange={e=>setForm({...form,employeeId:e.target.value})} className="border rounded px-3 py-2">
+            <select
+              value={form.employeeId}
+              onChange={(e) =>
+                setForm({ ...form, employeeId: e.target.value })
+              }
+              className="border rounded px-3 py-2"
+            >
               <option value="">Select…</option>
-              {empOptions.map(o=> <option key={o.id} value={o.id}>{o.name} (#{o.id})</option>)}
+              {empOptions.map((o) => (
+                <option key={o.id} value={o.id}>
+                  {o.name} (#{o.id})
+                </option>
+              ))}
             </select>
           </div>
           <div>
             <label className="block text-sm">Clock In</label>
-            <input type="datetime-local" value={form.clockIn} onChange={e=>setForm({...form,clockIn:e.target.value})} className="border rounded px-3 py-2" />
+            <input
+              type="datetime-local"
+              value={form.clockIn}
+              onChange={(e) =>
+                setForm({ ...form, clockIn: e.target.value })
+              }
+              className="border rounded px-3 py-2"
+            />
           </div>
           <div>
             <label className="block text-sm">Clock Out</label>
-            <input type="datetime-local" value={form.clockOut} onChange={e=>setForm({...form,clockOut:e.target.value})} className="border rounded px-3 py-2" />
+            <input
+              type="datetime-local"
+              value={form.clockOut}
+              onChange={(e) =>
+                setForm({ ...form, clockOut: e.target.value })
+              }
+              className="border rounded px-3 py-2"
+            />
           </div>
-          <button onClick={async()=>{
-            if(!form.employeeId||!form.clockIn){alert('Select employee and clock in');return;}
-            const body={ employeeId:Number(form.employeeId), clockIn: new Date(form.clockIn).toISOString(), ...(form.clockOut?{clockOut:new Date(form.clockOut).toISOString()}:{} )};
-            const res=await fetch('/api/attendance',{method:'POST',headers:{'Content-Type':'application/json', ...(token?{Authorization:`Bearer ${token}`}:{})},body:JSON.stringify(body)});
-            if(res.ok){setForm({employeeId:'',clockIn:'',clockOut:''});fetchData();}else{alert(await res.text());}
-          }} className="rounded bg-green-600 px-4 py-2 text-white">Save</button>
+          <button
+            onClick={async () => {
+              if (!form.employeeId || !form.clockIn) {
+                alert("Select employee and clock in");
+                return;
+              }
+              const body = {
+                employeeId: Number(form.employeeId),
+                clockIn: new Date(form.clockIn).toISOString(),
+                ...(form.clockOut
+                  ? { clockOut: new Date(form.clockOut).toISOString() }
+                  : {}),
+              };
+              const res = await fetch("/api/attendance", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                },
+                body: JSON.stringify(body),
+              });
+              if (res.ok) {
+                setForm({ employeeId: "", clockIn: "", clockOut: "" });
+                fetchData();
+              } else {
+                alert(await res.text());
+              }
+            }}
+            className="rounded bg-green-600 px-4 py-2 text-white"
+          >
+            Save
+          </button>
         </div>
       </div>
 
       {loading && <p>Loading…</p>}
       {error && <p className="text-red-600">{error}</p>}
 
+      {/* table */}
       <table className="min-w-full border-collapse">
         <thead>
           <tr className="bg-gray-100 text-left">
@@ -236,9 +235,17 @@ export default function AttendancePage() {
           {records.map((r) => (
             <tr key={r.id} className="hover:bg-gray-50">
               <td className="border px-4 py-2">{r.employee.name}</td>
-              <td className="border px-4 py-2">{new Date(r.clockIn).toLocaleString()}</td>
-              <td className="border px-4 py-2">{r.clockOut ? new Date(r.clockOut).toLocaleString() : "—"}</td>
-              <td className="border px-4 py-2">{hoursDiff(r.clockIn, r.clockOut)}</td>
+              <td className="border px-4 py-2">
+                {new Date(r.clockIn).toLocaleString()}
+              </td>
+              <td className="border px-4 py-2">
+                {r.clockOut
+                  ? new Date(r.clockOut).toLocaleString()
+                  : "—"}
+              </td>
+              <td className="border px-4 py-2">
+                {hoursDiff(r.clockIn, r.clockOut)}
+              </td>
             </tr>
           ))}
         </tbody>
