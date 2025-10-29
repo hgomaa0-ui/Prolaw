@@ -1,4 +1,109 @@
-"use client";
+2025-09-15T21:07:31.267Z [info] withCompany token present companyId 1
+2025-09-15T21:07:31.469Z [info] prisma:error 
+Invalid `prisma.attendance.createMany()` invocation:
+
+{
+  data: [
+    {
+      employeeId: 2,
+      clockIn: new Date("2025-09-14T06:00:00.000Z"),
+      clockOut: new Date("2025-09-14T14:30:00.000Z"),
+      companyId: 1
+    },
+    {
+      employeeId: 2,
+      clockIn: new Date("2025-09-15T20:34:15.197Z"),
+      clockOut: undefined,
+      companyId: 1
+    },
+    {
+      employeeId: 1,
+      clockIn: new Date("2025-09-15T20:34:55.656Z"),
+      clockOut: undefined,
+      companyId: 1
+    },
+    {
+      employeeId: 2,
+      clockIn: new Date("2025-09-13T06:00:00.000Z"),
+      clockOut: new Date("2025-09-13T14:30:00.000Z"),
+      companyId: 1
+    }
+  ]
+}
+
+Unknown argument `companyId`. Available options are marked with ?.
+2025-09-15T21:07:31.475Z [error] ⨯ Error [PrismaClientValidationError]: 
+Invalid `prisma.attendance.createMany()` invocation:
+
+{
+  data: [
+    {
+      employeeId: 2,
+      clockIn: new Date("2025-09-14T06:00:00.000Z"),
+      clockOut: new Date("2025-09-14T14:30:00.000Z"),
+      companyId: 1
+    },
+    {
+      employeeId: 2,
+      clockIn: new Date("2025-09-15T20:34:15.197Z"),
+      clockOut: undefined,
+      companyId: 1
+    },
+    {
+      employeeId: 1,
+      clockIn: new Date("2025-09-15T20:34:55.656Z"),
+      clockOut: undefined,
+      companyId: 1
+    },
+    {
+      employeeId: 2,
+      clockIn: new Date("2025-09-13T06:00:00.000Z"),
+      clockOut: new Date("2025-09-13T14:30:00.000Z"),
+      companyId: 1
+    }
+  ]
+}
+
+Unknown argument `companyId`. Available options are marked with ?.
+    at async (.next/server/app/api/attendance/import/route.js:1:3780) {
+  clientVersion: '6.11.1'
+}
+2025-09-15T21:07:31.476Z [error] ⨯ Error [PrismaClientValidationError]: 
+Invalid `prisma.attendance.createMany()` invocation:
+
+{
+  data: [
+    {
+      employeeId: 2,
+      clockIn: new Date("2025-09-14T06:00:00.000Z"),
+      clockOut: new Date("2025-09-14T14:30:00.000Z"),
+      companyId: 1
+    },
+    {
+      employeeId: 2,
+      clockIn: new Date("2025-09-15T20:34:15.197Z"),
+      clockOut: undefined,
+      companyId: 1
+    },
+    {
+      employeeId: 1,
+      clockIn: new Date("2025-09-15T20:34:55.656Z"),
+      clockOut: undefined,
+      companyId: 1
+    },
+    {
+      employeeId: 2,
+      clockIn: new Date("2025-09-13T06:00:00.000Z"),
+      clockOut: new Date("2025-09-13T14:30:00.000Z"),
+      companyId: 1
+    }
+  ]
+}
+
+Unknown argument `companyId`. Available options are marked with ?.
+    at async (.next/server/app/api/attendance/import/route.js:1:3780) {
+  clientVersion: '6.11.1'
+}"use client";
 import React, { useState, useEffect } from "react";
 import { getAuth } from "@/lib/auth";
 
