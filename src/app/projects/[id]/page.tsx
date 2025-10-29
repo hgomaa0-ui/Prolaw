@@ -223,7 +223,10 @@ export default function ProjectDetailPage() {
       <div className="mb-8">
         <button onClick={()=>setShowTaskModal(true)} className="bg-blue-600 text-white px-4 py-1 rounded text-sm">Add Task</button>
       </div>
-
+      import TasksTable from '@/components/TasksTable';
+...
+<AddTaskButton projectId={project.id} />
+<TasksTable projectId={project.id} />
       {showTaskModal && (
         <ProjectTaskModal projectId={projectId} onClose={()=>setShowTaskModal(false)} />
       )}
