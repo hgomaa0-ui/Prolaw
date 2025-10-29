@@ -89,7 +89,7 @@ export default function ProjectDetailPage() {
         method,
         headers: {
           "Content-Type": "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
         },
         body: JSON.stringify({
           projectId,
@@ -97,7 +97,7 @@ export default function ProjectDetailPage() {
           currency,
           accountType,
           notes: notes.trim() || null,
-          bankId: bankId || null,
+          bankId: bankId || null
         }),
       });
       if (!res.ok) throw new Error(editId ? "Failed update" : "Failed add");
@@ -223,10 +223,6 @@ export default function ProjectDetailPage() {
       <div className="mb-8">
         <button onClick={()=>setShowTaskModal(true)} className="bg-blue-600 text-white px-4 py-1 rounded text-sm">Add Task</button>
       </div>
-      import TasksTable from '@/components/TasksTable';
-...
-<AddTaskButton projectId={project.id} />
-<TasksTable projectId={project.id} />
       {showTaskModal && (
         <ProjectTaskModal projectId={projectId} onClose={()=>setShowTaskModal(false)} />
       )}
