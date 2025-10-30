@@ -27,12 +27,7 @@ export async function GET(req: NextRequest) {
   const isManager = ['LAWYER_PARTNER','MANAGING_PARTNER','LAWYER_MANAGER','OWNER','ADMIN'].includes(role);
   if (!isManager) {
     // regular lawyer: only own assigned tasks
-    where = {
-      OR: [
-        { assigneeId: session.user.id },
-        { project: { assignments: { some: { userId: session.user.id } } } }
-      ]
-    };
+    where = { assigneeId: session.user.id };
   }
 
   const companyId = (session.user as any).companyId;
