@@ -36,6 +36,17 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
 
   const prevAssignee = task.assigneeId;
   const updated = await prisma.task.update({ where: { id }, data: update });
+  // status change notification
+  if (data.status && data.status !== task.status) {
+    // notify assigner when task is DONE
+    if (data.status === 'DONE') {
+      await prisma.notification.create({ data: { userId: task.assignerId, type: 'TASK_DONE', message: `Task "${task.title}" was completed` } });
+      const assigner = await prisma.user.findUnique({ where: { id: task.assignerId }, select: { email: true } });
+      if (assigner?.email) {
+        try { await import('@/lib/email').then(m => m.sendMail(assigner.email, 'Task Completed', `<p>Task <b>${task.title}</b> was marked done.</p>`)); } catch {}
+      }
+    }
+  }
   // if reassigned
   if (data.assigneeId && data.assigneeId !== prevAssignee) {
     // ensure project assignment
