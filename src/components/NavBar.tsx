@@ -18,7 +18,7 @@ const ROLE_PAGES: Record<string,string[]> = {
   HR_MANAGER:["hr","employees","payroll","leaves","positions","notifications","admin_time"],
   LAWYER_MANAGER:["time","expenses","reports","leaves","notifications","settings","admin_time","tasks"],
   HR:["hr","payroll","leaves","notifications"],
-  LAWYER:["time","expenses","leaves","notifications"],
+  LAWYER:["time","expenses","leaves","notifications","tasks"],
   ADMIN_REPORTS:["clients","projects","time","expenses","invoices","reports","settings","leaves","notifications"],
 };
 
