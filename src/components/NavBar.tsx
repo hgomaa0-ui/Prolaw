@@ -25,6 +25,7 @@ const ROLE_PAGES: Record<string,string[]> = {
 const links:NavLink[] = [
   { href: "/clients",   label: "Clients", key:"clients" },
   { href: "/projects", label: "Projects", key:"projects" },
+  { href: "/admin/tasks", label: "Tasks", key:"tasks" },
   { href: "/time", label: "Time Entries", key:"time" },
   { href: "/expenses", label: "Expenses", key:"expenses" },
   { href: "/leaves", label: "Leaves", key:"leaves" },

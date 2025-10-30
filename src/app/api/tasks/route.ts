@@ -19,7 +19,15 @@ export async function GET(req: NextRequest) {
     where = { assigneeId: session.user.id };
   }
 
+  const companyId = (session.user as any).companyId;
   const tasks = await prisma.task.findMany({
+    where: {
+      ...where,
+      OR: [
+        { project: { companyId } },
+        { client: { companyId } }
+      ]
+    },
     where,
     include: {
       client: { select: { name: true, id: true } },
