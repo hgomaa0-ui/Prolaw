@@ -115,6 +115,16 @@ export default function TasksPage() {
     return t ? { Authorization: `Bearer ${t}` } : {};
   }
 
+  const reassign = async (id:number)=>{
+    const lid = prompt('New lawyer ID:');
+    if(!lid) return;
+    try{
+      await fetch(`/api/tasks/${id}`,{method:'PATCH',headers:{'Content-Type':'application/json', ...buildAuth()},body:JSON.stringify({assigneeId:parseInt(lid)})});
+      toast.success('Reassigned');
+      load();
+    }catch{toast.error('Failed');}
+  };
+
   const updateStatus = async (id: number, status: string) => {
     try {
       await fetch(`/api/tasks/${id}`, {
@@ -175,19 +185,14 @@ export default function TasksPage() {
                   <td className="px-3 py-2 capitalize">
                     {t.status.toLowerCase()}
                   </td>
-                  <td className="px-3 py-2 space-x-1">
-                    <button
-                      className="text-green-600 hover:underline"
-                      onClick={() => updateStatus(t.id, "DONE")}
-                    >
-                      Done
-                    </button>
-                    <button
-                      className="text-red-600 hover:underline"
-                      onClick={() => updateStatus(t.id, "REJECTED")}
-                    >
-                      Reject
-                    </button>
+                  <td className="px-3 py-2 space-x-2">
+                    {t.status === 'PENDING' && (
+                      <button className="text-blue-600 hover:underline" onClick={() => updateStatus(t.id,'IN_PROGRESS')}>Start</button>
+                    )}
+                    {t.status === 'IN_PROGRESS' && (
+                      <button className="text-green-600 hover:underline" onClick={() => updateStatus(t.id,'DONE')}>Done</button>
+                    )}
+                    <button className="text-indigo-600 hover:underline" onClick={() => reassign(t.id)}>Assign</button>
                   </td>
                 </tr>
               ))}
