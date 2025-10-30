@@ -133,15 +133,21 @@ export default function TasksPage() {
   
   const updateStatus = async (id: number, status: string) => {
     try {
-      await fetch(`/api/tasks/${id}`, {
-        method: "PATCH",
-                headers: { "Content-Type": "application/json", ...buildAuth() },
+      const res = await fetch(`/api/tasks/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', ...buildAuth() },
         body: JSON.stringify({ status }),
       });
-      toast.success("Updated");
-      load();
-    } catch {
-      toast.error("Update failed");
+      if (!res.ok) {
+        const msg = (await res.json().catch(()=>null))?.error || 'Failed';
+        throw new Error(msg);
+      }
+      const updated = await res.json();
+      // optimistic update
+      setTasks(prev => prev.map(t => t.id === id ? { ...t, status: updated.status } : t));
+      toast.success('Updated');
+    } catch (e:any) {
+      toast.error(e.message || 'Update failed');
     }
   };
 
