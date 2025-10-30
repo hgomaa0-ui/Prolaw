@@ -35,15 +35,25 @@ export default function TasksPage() {
     Promise.all([
       fetch('/api/list/clients', { headers: buildAuth() }).then(r => r.json()),
       fetch('/api/list/projects', { headers: buildAuth() }).then(r => r.json()),
-      fetch('/api/list/lawyers', { headers: buildAuth() }).then(r => r.json()),
     ])
-      .then(([c, p, l]) => {
+      .then(([c, p]) => {
         setClients(c);
         setProjects(p);
-        setLawyers(l);
-      })
+              })
       .catch(() => {});
   }, []);
+
+  // Load lawyers when project is selected
+  useEffect(() => {
+    if (form.projectId) {
+      fetch(`/api/list/lawyers?projectId=${form.projectId}`, { headers: buildAuth() })
+        .then(r => r.json())
+        .then(setLawyers)
+        .catch(() => setLawyers([]));
+    } else {
+      setLawyers([]);
+    }
+  }, [form.projectId]);
 
   const load = () => {
     setLoading(true);
