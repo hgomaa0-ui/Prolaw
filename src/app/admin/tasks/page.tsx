@@ -2,6 +2,15 @@
 import { useEffect, useState } from "react";
 import toast, { Toaster } from "react-hot-toast";
 import { getAuth } from "@/lib/auth";
+function getCompanyId(): number | undefined {
+  const t = getAuth();
+  if (!t) return undefined;
+  try {
+    return JSON.parse(atob(t.split('.')[1])).companyId;
+  } catch {
+    return undefined;
+  }
+}
 
 interface Task {
   id: number;
@@ -32,9 +41,11 @@ export default function TasksPage() {
   const [lawyers, setLawyers] = useState<{ id: number; name: string }[]>([]);
 
   useEffect(() => {
+    const cid = getCompanyId();
+    const qs = cid ? `?companyId=${cid}` : "";
     Promise.all([
-      fetch('/api/list/clients', { headers: buildAuth() }).then(r => r.json()),
-      fetch('/api/list/projects', { headers: buildAuth() }).then(r => r.json()),
+      fetch(`/api/list/clients${qs}`, { headers: buildAuth() }).then(r=>r.json()),
+      fetch(`/api/list/projects${qs}`, { headers: buildAuth() }).then(r=>r.json()),
     ])
       .then(([c, p]) => {
         setClients(c);
