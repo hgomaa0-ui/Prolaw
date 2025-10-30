@@ -24,9 +24,15 @@ export async function GET(req: NextRequest) {
 
   const role = session.user.role as string;
   let where: any = {};
-  if (!['LAWYER_PARTNER','MANAGING_PARTNER','LAWYER_MANAGER','OWNER','ADMIN'].includes(role)) {
+  const isManager = ['LAWYER_PARTNER','MANAGING_PARTNER','LAWYER_MANAGER','OWNER','ADMIN'].includes(role);
+  if (!isManager) {
     // regular lawyer: only own assigned tasks
-    where = { assigneeId: session.user.id };
+    where = {
+      OR: [
+        { assigneeId: session.user.id },
+        { project: { assignments: { some: { userId: session.user.id } } } }
+      ]
+    };
   }
 
   const companyId = (session.user as any).companyId;
@@ -94,6 +100,13 @@ export async function POST(req: NextRequest) {
       create: { userId: assigneeId, projectId },
       update: {},
     });
+  }
+  // create notification to assignee
+  await prisma.notification.create({ data: { userId: assigneeId, type: 'TASK_ASSIGN', message: `You were assigned task "${title}"` } });
+  // send email if user has email
+  const assignee = await prisma.user.findUnique({ where: { id: assigneeId }, select:{ email:true } });
+  if (assignee?.email) {
+    try { await import('@/lib/email').then(m=>m.sendMail(assignee.email, 'New Task Assigned', `<p>You have a new task: <b>${title}</b></p>`)); } catch {}
   }
   return NextResponse.json(task, { status: 201 });
 }
