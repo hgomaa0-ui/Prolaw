@@ -7,7 +7,17 @@ const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-change-me';
 
 // GET /api/tasks -> list tasks for current user (or all if admin)
 export async function GET(req: NextRequest) {
-  const session = await getServerSession(authOptions);
+  let session = await getServerSession(authOptions);
+  if (!session?.user) {
+    // try bearer / custom token
+    const raw = getAuthServer(req);
+    if (raw) {
+      try {
+        const decoded = jwt.verify(raw, JWT_SECRET) as any;
+        session = { user: decoded } as any;
+      } catch {}
+    }
+  }
   if (!session?.user) {
     return NextResponse.json({ error: 'Unauthenticated' }, { status: 401 });
   }
