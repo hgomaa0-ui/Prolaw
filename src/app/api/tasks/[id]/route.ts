@@ -1,10 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { getServerSession } from 'next-auth/next';
+import { getAuthServer } from '@/lib/auth';
+import jwt from 'jsonwebtoken';
+const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-change-me';
 import { authOptions } from '@/lib/auth';
 
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
-  const session = await getServerSession(authOptions);
+  let session = await getServerSession(authOptions);
+  if (!session?.user) {
+    const raw = getAuthServer(req);
+    if (raw) {
+      try { session = { user: jwt.verify(raw, JWT_SECRET) as any } as any; } catch {}
+    }
+  }
   if (!session?.user) {
     return NextResponse.json({ error: 'Unauthenticated' }, { status: 401 });
   }
