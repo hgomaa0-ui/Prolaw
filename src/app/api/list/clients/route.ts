@@ -8,7 +8,10 @@ import { authOptions } from '@/lib/auth';
 
 export async function GET(req: NextRequest) {
   const session = await getServerSession(authOptions as any);
-  let companyId = session?.user?.companyId as number | undefined;
+  let companyId: number | undefined;
+  const param = req.nextUrl.searchParams.get('companyId');
+  if (param && !Number.isNaN(parseInt(param))) companyId = parseInt(param);
+  if (!companyId) companyId = session?.user?.companyId as number | undefined;
   if (!companyId && session?.user?.id) {
     const u = await prisma.user.findUnique({ where: { id: session.user.id }, select: { companyId: true } });
     companyId = u?.companyId;
