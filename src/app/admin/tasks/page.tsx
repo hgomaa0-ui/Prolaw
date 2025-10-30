@@ -46,7 +46,10 @@ export default function TasksPage() {
 
   const load = () => {
     setLoading(true);
-    fetch("/api/tasks")
+    const token = localStorage.getItem('token');
+    fetch("/api/tasks", {
+      headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+    })
       .then((r) => r.json())
       .then(setTasks)
       .catch(() => toast.error("Error"))
@@ -57,9 +60,10 @@ export default function TasksPage() {
 
   const addTask = async () => {
     try {
+      const token = localStorage.getItem('token');
       const res = await fetch("/api/tasks", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
         body: JSON.stringify({
           ...form,
           assigneeId: parseInt(form.assigneeId || "0"),
@@ -86,9 +90,10 @@ export default function TasksPage() {
 
   const updateStatus = async (id: number, status: string) => {
     try {
+      const token = localStorage.getItem('token');
       await fetch(`/api/tasks/${id}`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
         body: JSON.stringify({ status }),
       });
       toast.success("Updated");
