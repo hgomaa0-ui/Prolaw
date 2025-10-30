@@ -89,7 +89,11 @@ export default function TasksPage() {
           projectId: form.projectId ? parseInt(form.projectId) : undefined,
         }),
       });
-      if (!res.ok) throw new Error();
+      if (!res.ok) {
+        const data = await res.json().catch(()=>null);
+        const msg = data?.error || 'Bad Request';
+        throw new Error(msg);
+      }
       toast.success("Task created");
       setShowModal(false);
       setForm({
@@ -101,8 +105,8 @@ export default function TasksPage() {
         description: "",
       });
       load();
-    } catch {
-      toast.error("Creation failed");
+    } catch (err:any) {
+      toast.error(err.message || "Creation failed");
     }
   };
 
@@ -258,7 +262,9 @@ export default function TasksPage() {
               </button>
               <button
                 onClick={addTask}
-                className="px-4 py-2 bg-blue-600 text-white rounded"
+                disabled={!form.title.trim() || !form.assigneeId || !form.dueDate}
+                className="px-4 py-2 rounded text-white disabled:opacity-50"
+                style={{backgroundColor: (!form.title.trim() || !form.assigneeId || !form.dueDate) ? '#94a3b8':'#2563eb'}}
               >
                 Save
               </button>
