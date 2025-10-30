@@ -1,11 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import jwt from 'jsonwebtoken';
+import { getAuthServer } from '@/lib/auth';
 import { convert } from '@/lib/forex';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-change-me';
 
 function getUserId(request: NextRequest): number | null {
+  // try bearer/cookie via util first
+  const raw = getAuthServer(request);
+  if (raw) {
+    try {
+      const decoded = jwt.verify(raw, JWT_SECRET) as any;
+      return Number((decoded as any).id ?? (decoded as any).sub);
+    } catch {}
+  }
   // Try Authorization header first
   let token: string | null = null;
   const auth = request.headers.get('authorization') || '';
