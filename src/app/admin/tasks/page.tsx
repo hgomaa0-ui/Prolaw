@@ -115,16 +115,22 @@ export default function TasksPage() {
     return t ? { Authorization: `Bearer ${t}` } : {};
   }
 
-  const reassign = async (id:number)=>{
-    const lid = prompt('New lawyer ID:');
-    if(!lid) return;
+  const reassign = async (task: Task)=>{
+    if(!task.project?.id){toast.error('No project');return;}
+    const choices = await fetch(`/api/list/lawyers?projectId=${task.project.id}`,{headers:buildAuth()}).then(r=>r.json()).catch(()=>[]);
+    if(!choices.length){toast.error('No lawyers');return;}
+    const list = choices.map((l:any)=>`${l.id}: ${l.name}`).join('\n');
+    const ans = prompt(`Select lawyer by id:\n${list}`);
+    if(!ans) return;
+    const lid = parseInt(ans);
+    if(Number.isNaN(lid)){toast.error('Invalid');return;}
     try{
-      await fetch(`/api/tasks/${id}`,{method:'PATCH',headers:{'Content-Type':'application/json', ...buildAuth()},body:JSON.stringify({assigneeId:parseInt(lid)})});
+      await fetch(`/api/tasks/${task.id}`,{method:'PATCH',headers:{'Content-Type':'application/json',...buildAuth()},body:JSON.stringify({assigneeId:lid})});
       toast.success('Reassigned');
       load();
     }catch{toast.error('Failed');}
   };
-
+  
   const updateStatus = async (id: number, status: string) => {
     try {
       await fetch(`/api/tasks/${id}`, {
@@ -192,7 +198,7 @@ export default function TasksPage() {
                     {t.status === 'IN_PROGRESS' && (
                       <button className="text-green-600 hover:underline" onClick={() => updateStatus(t.id,'DONE')}>Done</button>
                     )}
-                    <button className="text-indigo-600 hover:underline" onClick={() => reassign(t.id)}>Assign</button>
+                    <button className="text-indigo-600 hover:underline" onClick={() => reassign(t)}>Assign</button>
                   </td>
                 </tr>
               ))}
