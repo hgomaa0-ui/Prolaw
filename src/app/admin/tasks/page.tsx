@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import toast, { Toaster } from "react-hot-toast";
+import { getAuth } from "@/lib/auth";
 
 interface Task {
   id: number;
@@ -32,9 +33,9 @@ export default function TasksPage() {
 
   useEffect(() => {
     Promise.all([
-      fetch('/api/list/clients').then(r => r.json()),
-      fetch('/api/list/projects').then(r => r.json()),
-      fetch('/api/list/lawyers').then(r => r.json()),
+      fetch('/api/list/clients', { headers: buildAuth() }).then(r => r.json()),
+      fetch('/api/list/projects', { headers: buildAuth() }).then(r => r.json()),
+      fetch('/api/list/lawyers', { headers: buildAuth() }).then(r => r.json()),
     ])
       .then(([c, p, l]) => {
         setClients(c);
@@ -46,10 +47,7 @@ export default function TasksPage() {
 
   const load = () => {
     setLoading(true);
-    const token = localStorage.getItem('token');
-    fetch("/api/tasks", {
-      headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-    })
+    fetch("/api/tasks", { headers: buildAuth() })
       .then((r) => r.json())
       .then(setTasks)
       .catch(() => toast.error("Error"))
@@ -60,10 +58,9 @@ export default function TasksPage() {
 
   const addTask = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const res = await fetch("/api/tasks", {
+            const res = await fetch("/api/tasks", {
         method: "POST",
-        headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        headers: { "Content-Type": "application/json", ...buildAuth() },
         body: JSON.stringify({
           ...form,
           assigneeId: parseInt(form.assigneeId || "0"),
@@ -88,12 +85,16 @@ export default function TasksPage() {
     }
   };
 
+  function buildAuth(): { [key: string]: string } {
+    const t = getAuth();
+    return t ? { Authorization: `Bearer ${t}` } : {};
+  }
+
   const updateStatus = async (id: number, status: string) => {
     try {
-      const token = localStorage.getItem('token');
       await fetch(`/api/tasks/${id}`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+                headers: { "Content-Type": "application/json", ...buildAuth() },
         body: JSON.stringify({ status }),
       });
       toast.success("Updated");
