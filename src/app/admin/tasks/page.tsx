@@ -49,7 +49,7 @@ export default function TasksPage() {
       fetch(`/api/list/lawyers?projectId=${form.projectId}`, { headers: buildAuth() })
         .then(r => r.json())
         .then(setLawyers)
-        .catch(() => setLawyers([]));
+        .catch(() => {}); // Removed setLawyers call here
     } else {
       setLawyers([]);
     }
