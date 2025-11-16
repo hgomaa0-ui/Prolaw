@@ -815,6 +815,7 @@ model Task {
   assigneeId  Int
   dueDate     DateTime
   status      TaskStatus @default(PENDING)
+  dueReminderSent Boolean @default(false)
   createdAt   DateTime   @default(now())
 
   client   Client?  @relation("ClientTasks", fields: [clientId], references: [id])
