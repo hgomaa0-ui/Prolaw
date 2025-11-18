@@ -6,7 +6,7 @@
   },
   "crons": [
     {
-      "path": "/api/tasks/reminders",
+      "path": "/api/tasks/reminders?secret=cron-123",
       "schedule": "0 9 * * *"
     }
   ]
