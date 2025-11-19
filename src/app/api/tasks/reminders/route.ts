@@ -5,9 +5,11 @@ import { sendMail } from '@/lib/email';
 const CRON_SECRET = process.env.CRON_SECRET || 'cron-secret';
 
 export async function GET(req:NextRequest){
-  const auth=req.headers.get('authorization')||'';
-  if(auth!==`Bearer ${CRON_SECRET}`){
-    return NextResponse.json({error:'Unauthorized'},{status:401});
+  const auth = req.headers.get('authorization') || '';
+  const secretQs = new URL(req.url).searchParams.get('secret');
+  const valid = auth === `Bearer ${CRON_SECRET}` || secretQs === CRON_SECRET;
+  if (!valid) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
   const now = new Date();
   const in48h = new Date(now.getTime() + 48 * 60 * 60 * 1000);
@@ -16,7 +18,6 @@ export async function GET(req:NextRequest){
     where: {
       status: { not: 'DONE' },
       dueDate: { gte: now, lte: in48h },
-      dueReminderSent: false,
     },
     include: { assignee: { select: { email: true, name: true } } },
   });
@@ -28,7 +29,7 @@ export async function GET(req:NextRequest){
 <p>الموعد النهائى: ${t.dueDate.toLocaleDateString('ar-EG')}</p>`;
     try {
       await sendMail(t.assignee.email, '⏰ تذكير مهمة تنتهي بعد يومين', html);
-      await prisma.task.update({ where: { id: t.id }, data: { dueReminderSent: true } });
+      await prisma.task.update({ where: { id: t.id }, data: { lastReminderAt: new Date() } });
       sent++;
     } catch {}
   }
