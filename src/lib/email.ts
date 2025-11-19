@@ -7,7 +7,10 @@ if (!SMTP_HOST) {
 }
 
 export async function sendMail(to: string, subject: string, html: string) {
-  if (!SMTP_HOST) return;
+  if (!SMTP_HOST) {
+    console.warn('SMTP not configured; skipping email to', to);
+    return;
+  }
   const transporter = nodemailer.createTransport({
     host: SMTP_HOST,
     port: Number(SMTP_PORT) || 587,
@@ -17,5 +20,10 @@ export async function sendMail(to: string, subject: string, html: string) {
       pass: SMTP_PASS,
     },
   });
-  await transporter.sendMail({ from: SMTP_FROM || SMTP_USER, to, subject, html });
+  try {
+    const info = await transporter.sendMail({ from: SMTP_FROM || SMTP_USER, to, subject, html });
+    console.log('Email sent to', to, 'MessageId:', info.messageId);
+  } catch (err) {
+    console.error('Email error:', (err as Error).message);
+  }
 }
