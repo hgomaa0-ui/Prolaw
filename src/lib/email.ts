@@ -21,7 +21,7 @@ export async function sendMail(to: string, subject: string, html: string) {
     },
   });
   try {
-    const info = await transporter.sendMail({ from: SMTP_FROM || SMTP_USER, to, subject, html });
+    const info = await transporter.sendMail({ from: SMTP_USER, to, subject, html });
     console.log('Email sent to', to, 'MessageId:', info.messageId);
   } catch (err) {
     console.error('Email error:', (err as Error).message);
