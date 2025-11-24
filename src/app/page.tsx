@@ -5,7 +5,7 @@ import Link from "next/link";
 export default function Home() {
   return (
     <div
-      className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-cover bg-center bg-no-repeat bg-gray-900/80"
+      className="min-h-screen flex items-start justify-center pt-32 pb-12 px-4 sm:px-6 lg:px-8 bg-cover bg-center bg-no-repeat bg-gray-900/80"
       style={{ backgroundImage: "url('/prolaw-bg.jpg')" }}
     >
       <div className="max-w-md w-full space-y-8 bg-white/95 backdrop-blur-sm rounded-lg p-8 shadow-lg">
