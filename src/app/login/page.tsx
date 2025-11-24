@@ -45,7 +45,7 @@ export default function LoginPage() {
 
   return (
     <div
-      className="min-h-screen flex items-center justify-center bg-gray-900/80 p-4 bg-cover bg-center bg-no-repeat"
+      className="min-h-screen flex items-start justify-center pt-32 bg-gray-900/80 p-4 bg-cover bg-center bg-no-repeat"
       style={{ backgroundImage: "url('/prolaw-bg.jpg')" }}
     >
       <form
