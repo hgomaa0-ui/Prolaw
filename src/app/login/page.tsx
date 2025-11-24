@@ -44,10 +44,13 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100 p-4">
+    <div
+      className="min-h-screen flex items-center justify-center bg-gray-900/80 p-4 bg-cover bg-center bg-no-repeat"
+      style={{ backgroundImage: "url('/prolaw-bg.jpg')" }}
+    >
       <form
         onSubmit={handleSubmit}
-        className="w-full max-w-sm space-y-4 bg-white p-6 rounded shadow"
+        className="w-full max-w-sm space-y-4 bg-white/95 backdrop-blur-sm p-6 rounded shadow-lg"
       >
         <h1 className="text-xl font-semibold text-center">Sign in</h1>
         {error && (
