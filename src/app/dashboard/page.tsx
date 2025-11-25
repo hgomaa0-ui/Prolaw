@@ -40,7 +40,7 @@ export default function DashboardHome() {
 
   return (
     <main
-      className="min-h-screen flex items-start justify-center pt-32 pb-12 px-4 sm:px-6 lg:px-8 bg-cover bg-center bg-no-repeat bg-gray-900/80"
+      className="min-h-screen flex items-start justify-center pt-32 pb-12 px-4 sm:px-6 lg:px-8 bg-cover bg-top bg-no-repeat bg-gray-900/80"
       style={{ backgroundImage: "url('/prolaw-bg.jpg')" }}
     >
       <div className="w-full max-w-4xl bg-white/95 backdrop-blur-sm rounded-lg p-6 shadow-lg">
