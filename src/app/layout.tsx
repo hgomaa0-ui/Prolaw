@@ -17,7 +17,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className="antialiased">
+      <body className="antialiased" style={{ backgroundColor: "#0b2745" }}>
         <NavBar />
         {children}
         <Toaster position="top-right" />
