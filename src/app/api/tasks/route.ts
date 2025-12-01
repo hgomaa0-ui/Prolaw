@@ -23,23 +23,24 @@ export async function GET(req: NextRequest) {
   }
 
   const role = session.user.role as string;
-  let where: any = {};
   const isManager = ['LAWYER_PARTNER','MANAGING_PARTNER','LAWYER_MANAGER','OWNER','ADMIN'].includes(role);
-  if (!isManager) {
-    // regular lawyer: only own assigned tasks
-    where = { assigneeId: session.user.id };
-  }
 
+  // base filter by company
   const companyId = (session.user as any).companyId;
+  const companyFilter = companyId
+    ? {
+        OR: [
+          { project: { companyId } },
+          { client: { companyId } },
+        ],
+      }
+    : {};
+
+  // user-level filter (non-managers see فقط التاسكات المخصصة لهم)
+  const userFilter = isManager ? {} : { assigneeId: session.user.id };
+
   const tasks = await prisma.task.findMany({
-    where: {
-      ...where,
-      OR: [
-        { project: { companyId } },
-        { client: { companyId } }
-      ]
-    },
-    where,
+    where: { ...companyFilter, ...userFilter },
     include: {
       client: { select: { name: true, id: true } },
       project: { select: { name: true, id: true } },
