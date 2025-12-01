@@ -10,7 +10,9 @@ function getUser(req: NextRequest) {
   if (!token) return null;
   try {
     const d = jwt.verify(token, JWT_SECRET) as any;
-    return d ? { id: Number(d.sub), role: d.role } : null;
+    const sub = d?.sub ?? d?.id;
+    const idNum = sub ? Number(sub) : NaN;
+    return d && !Number.isNaN(idNum) ? { id: idNum, role: d.role } : null;
   } catch {
     return null;
   }
@@ -23,6 +25,10 @@ export async function GET(req: NextRequest) {
   if (!(user.role === 'OWNER' || user.role === 'MANAGER' || user.role === 'LAWYER_MANAGER'))
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   try {
+    // scope by company
+    const me = await prisma.user.findUnique({ where: { id: user.id }, select: { companyId: true } });
+    const companyId = me?.companyId ?? 0;
+
     // If role is LAWYER_MANAGER, only load entries for lawyers they manage
     let userFilter: any = {};
     if (user.role === 'LAWYER_MANAGER') {
@@ -38,7 +44,11 @@ export async function GET(req: NextRequest) {
     }
 
     const list = await prisma.timeEntry.findMany({
-      where: { managerApproved: false, ...userFilter },
+      where: {
+        managerApproved: false,
+        ...userFilter,
+        project: { client: { companyId } },
+      },
       include: {
         project: { select: { name: true, client: { select: { name: true } } } },
         user: { select: { name: true } },
