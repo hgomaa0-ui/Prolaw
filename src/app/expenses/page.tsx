@@ -79,7 +79,8 @@ export default function ExpensesPage() {
       fetch("/api/assignments", { headers }),
       isAdmin ? fetch("/api/lawyers", { headers }) : Promise.resolve(new Response(JSON.stringify([]), { headers: { 'Content-Type':'application/json' } })),
     ]);
-    if (cRes.ok) setClients(await cRes.json());
+
+    const allClients = cRes.ok ? await cRes.json() : [];
     if (aRes.ok) {
       const asn = await aRes.json();
       setAssignments(asn);
@@ -89,9 +90,24 @@ export default function ExpensesPage() {
         return [proj.id, proj];
       })).values());
       setProjects(uniqProjects);
-    } else if (pRes.ok) {
-      setProjects(await pRes.json());
+
+      // for non-admin users, restrict clients to those they have assignments for
+      if (!isAdmin) {
+        const clientMap = new Map<number, any>();
+        asn.forEach((a:any)=>{
+          const c = a.project?.client;
+          if (c && !clientMap.has(c.id)) clientMap.set(c.id, c);
+        });
+        setClients(Array.from(clientMap.values()));
+      } else {
+        setClients(allClients);
+      }
+    } else {
+      // fallback: no assignments API, use full projects/clients
+      if (pRes.ok) setProjects(await pRes.json());
+      setClients(allClients);
     }
+
     if (isAdmin && lRes.ok) {
       const ls = await lRes.json();
       setLawyers(Array.isArray(ls) ? ls : []);
