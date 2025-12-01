@@ -241,13 +241,11 @@ export default function TimeEntriesPage() {
   const tryAutoQuickSubmit = async () => {
     if (submitting) return;
     if (!quickDate || !quickHours || projectId === "") return;
-    if (isAdmin && selectedUserId === "") return;
     await addQuickHours();
   };
 
   const addQuickHours = async () => {
     if (!token || projectId === "" || !quickDate || !quickHours) return;
-    if (isAdmin && selectedUserId === "") { alert('Select lawyer'); return; }
     const hrs = Number(quickHours);
     if (isNaN(hrs) || hrs <= 0) { alert('Enter valid hours'); return; }
     setSubmitting(true);
