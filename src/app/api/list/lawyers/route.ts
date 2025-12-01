@@ -19,12 +19,9 @@ export async function GET(req: NextRequest) {
 
   const baseWhere:any = { role: { in: LAWYER_ROLES } };
   if (companyId) baseWhere.companyId = companyId;
-  if (projectId) {
-    const pid = parseInt(projectId);
-    if (!Number.isNaN(pid)) {
-      baseWhere.assignments = { some: { projectId: pid } };
-    }
-  }
+  // NOTE: previously we restricted to lawyers already assigned to the project via ProjectAssignment.
+  // This caused the dropdown to be empty when no assignments existed yet.
+  // Now we simply return all lawyers in the same company; the assignment will be created when a task is added.
   let lawyers = await prisma.user.findMany({
     where: baseWhere,
     select: { id: true, name: true },
