@@ -23,8 +23,22 @@ export async function GET(req: NextRequest) {
   if (!(user.role === 'OWNER' || user.role === 'MANAGER' || user.role === 'LAWYER_MANAGER'))
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   try {
+    // If role is LAWYER_MANAGER, only load entries for lawyers they manage
+    let userFilter: any = {};
+    if (user.role === 'LAWYER_MANAGER') {
+      const managed = await prisma.managerLawyer.findMany({
+        where: { managerId: user.id },
+        select: { lawyerId: true },
+      });
+      const ids = managed.map((m) => m.lawyerId);
+      if (ids.length === 0) {
+        return NextResponse.json([]);
+      }
+      userFilter.userId = { in: ids };
+    }
+
     const list = await prisma.timeEntry.findMany({
-      where: { managerApproved: false },
+      where: { managerApproved: false, ...userFilter },
       include: {
         project: { select: { name: true, client: { select: { name: true } } } },
         user: { select: { name: true } },

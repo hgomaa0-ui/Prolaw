@@ -23,9 +23,11 @@ export async function GET(req: NextRequest) {
   try {
     const user = getUser(req);
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    // allow owner/admin/accountant roles
+    // allow owner/admin/accountant roles, plus LAWYER_MANAGER / LAWYER_PARTNER for scoped approvals
     const ALLOWED = ['OWNER','ADMIN','ACCOUNTANT_MASTER','ACCOUNTANT_ASSISTANT','MANAGING_PARTNER'];
-    if (!ALLOWED.includes(String(user.role)))
+    const role = String(user.role);
+    const isManagerLawyer = role === 'LAWYER_MANAGER' || role === 'LAWYER_PARTNER';
+    if (!ALLOWED.includes(role) && !isManagerLawyer)
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
     // scope by company
@@ -34,9 +36,24 @@ export async function GET(req: NextRequest) {
     const me = await prisma.user.findUnique({ where: { id: uid }, select: { companyId: true } });
     const companyId = me?.companyId ?? 0;
 
+    // Optional user filter for LAWYER_MANAGER / LAWYER_PARTNER: only lawyers they manage
+    let userFilter: any = {};
+    if (isManagerLawyer) {
+      const managed = await prisma.managerLawyer.findMany({
+        where: { managerId: uid },
+        select: { lawyerId: true },
+      });
+      const lawyerIds = managed.map((m) => m.lawyerId);
+      if (lawyerIds.length === 0) {
+        return NextResponse.json([]);
+      }
+      userFilter.userId = { in: lawyerIds };
+    }
+
     const expenses = await prisma.expense.findMany({
       where: { 
         approved: false,
+        ...userFilter,
         project: { client: { companyId } },
       },
       orderBy: { incurredOn: 'asc' },
