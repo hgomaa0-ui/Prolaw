@@ -4,11 +4,17 @@ import { withCompany } from '@/lib/with-company';
 
 // GET /api/reports/banks?from=YYYY-MM-DD&to=YYYY-MM-DD
 // Returns [{ bank:{id,name,currency}, balance, transactions:[...] }]
-export const GET = withCompany(async (req: NextRequest, companyId?: number) => {
+export const GET = withCompany(async (req: NextRequest, companyId?: number | null) => {
   const from = req.nextUrl.searchParams.get('from');
   const to = req.nextUrl.searchParams.get('to');
 
-  const bankWhere = companyId !== undefined ? { OR: [ { companyId }, { companyId: null } ] } : {};
+  // لو الشركة مش معروفة (null/undefined) رجّع تقرير فاضي لحماية البيانات
+  if (companyId == null) {
+    return NextResponse.json([]);
+  }
+
+  // اعرض فقط البنوك الخاصة بهذه الشركة
+  const bankWhere = { companyId };
 
   const banks = await prisma.bankAccount.findMany({
     where: bankWhere,
