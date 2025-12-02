@@ -48,15 +48,28 @@ export async function GET(request: NextRequest) {
     companyId = null;
   }
 
+  // Build base where clause
+  let where: any = {
+    ...(startParam || endParam ? { startTs: dateFilter } : {}),
+    ...(projectId ? { projectId } : {}),
+    ...(userIdFilter ? { userId: userIdFilter } : {}),
+    ...(clientId ? { project: { clientId } } : {}),
+  };
+
+  // Apply company scoping: project must belong to this company either directly or via its client
+  if (companyId) {
+    where = {
+      ...where,
+      OR: [
+        { project: { companyId } },
+        { project: { client: { companyId } } },
+      ],
+    };
+  }
+
   // Fetch time entries with necessary relations in one go
   const timeEntries = await prisma.timeEntry.findMany({
-    where: {
-      ...(startParam || endParam ? { startTs: dateFilter } : {}),
-      ...(projectId ? { projectId } : {}),
-      ...(userIdFilter ? { userId: userIdFilter } : {}),
-      ...(clientId ? { project: { clientId } } : {}),
-      ...(companyId ? { project: { client: { companyId } } } : {}),
-    },
+    where,
     include: {
       user: { include: { position: true } },
       project: {
