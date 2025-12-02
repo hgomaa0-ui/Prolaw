@@ -7,3 +7,12 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Make form text clearly visible on dark background */
+label,
+input,
+select,
+textarea,
+option {
+  color: #000000;
+}
