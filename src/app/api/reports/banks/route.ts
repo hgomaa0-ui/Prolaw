@@ -34,6 +34,15 @@ export const GET = withCompany(async (req: NextRequest, companyId?: number | nul
     orderBy: { createdAt: 'asc' },
   });
 
+  // Include advance payments as incoming bank movements as well
+  const advWhere: any = { bankId: { in: bankIds } };
+  if (from) advWhere.paidOn = { gte: new Date(from) };
+  if (to) {
+    advWhere.paidOn = advWhere.paidOn || {};
+    (advWhere.paidOn as any).lte = new Date(to);
+  }
+  const advs = await prisma.advancePayment.findMany({ where: advWhere, orderBy: { paidOn: 'asc' } });
+
   // group by bank
   const grouped: Record<number, any> = {};
   for (const b of banks) {
@@ -51,6 +60,18 @@ export const GET = withCompany(async (req: NextRequest, companyId?: number | nul
       amount: Number(t.amount),
       currency: t.currency,
       memo: t.memo,
+    });
+  }
+
+  // add advance payments as positive movements
+  for (const a of advs) {
+    if (!grouped[a.bankId]) continue;
+    grouped[a.bankId].transactions.push({
+      id: a.id,
+      date: a.paidOn,
+      amount: Number(a.amount),
+      currency: a.currency,
+      memo: 'Advance payment',
     });
   }
 
