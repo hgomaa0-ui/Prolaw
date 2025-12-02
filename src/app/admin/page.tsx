@@ -70,9 +70,15 @@ export default function AdminSettingsPage() {
   let tiles: typeof tilesAll;
   if(role==='ACCOUNTANT_MASTER'){
     tiles=[
-                                              ];
+      // master accountant currently uses Accounts section instead of this dashboard
+    ];
   }else if(role==='ACCOUNTANT_ASSISTANT'){
-    tiles=[];
+    tiles=[
+      { href: '/accounts', title: 'Accounts', perm: '', description: 'Access accounting dashboards and tools.' },
+      { href: '/admin/expenses/pending', title: 'Pending Expenses', perm: '', description: 'Approve submitted expenses.' },
+      { href: '/accountant/time/pending', title: 'Pending Time (Accountant)', perm: '', description: 'Final approval for time entries.' },
+      { href: '/admin/office-expenses', title: 'Office Expenses', perm: '', description: 'Review office operating expenses.' },
+    ];
   }else if(role==='HR_MANAGER'){
     tiles=[
             {href:"/admin/employees",title:"Employees",perm:"employees",description:"Manage employees."}

@@ -3,20 +3,20 @@ import { prisma } from '@/lib/prisma';
 import jwt from 'jsonwebtoken';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-change-me';
-function getUserId(request: NextRequest): number | null {
+function getUser(request: NextRequest): { id: number | null; role: string | null } {
   let token: string | null = null;
   const auth = request.headers.get('authorization') || '';
   if (auth.startsWith('Bearer ')) token = auth.slice(7);
   if (!token) {
     token = request.cookies.get('token')?.value || null;
   }
-  if (!token) return null;
+  if (!token) return { id: null, role: null };
   try {
     const decoded = jwt.verify(token, JWT_SECRET) as any;
     const uid = decoded?.sub ?? decoded?.id;
-    return uid ? Number(uid) : null;
+    return { id: uid ? Number(uid) : null, role: decoded?.role ?? null };
   } catch {
-    return null;
+    return { id: null, role: null };
   }
 }
 
@@ -72,6 +72,13 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
  */
 export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
   try {
+    const { id: userId, role } = getUser(req);
+    if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const allowed = ['ACCOUNTANT_MASTER','ADMIN','OWNER'];
+    if (!role || !allowed.includes(String(role))) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
     const id = Number(params.id);
     await prisma.transaction.delete({ where: { id } });
     return NextResponse.json({ success: true });
