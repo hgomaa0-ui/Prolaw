@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { convert } from '@/lib/forex';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
+import jwt from 'jsonwebtoken';
 
 /**
  * GET /api/reports/lawyers
@@ -37,7 +38,7 @@ export async function GET(request: NextRequest) {
   if (startParam) dateFilter.gte = new Date(startParam);
   if (endParam) dateFilter.lte = new Date(endParam);
 
-  // scope by company using NextAuth session (no need for Authorization header)
+  // scope by company using NextAuth session first
   let companyId: number | null = null;
   try {
     const session = await getServerSession(authOptions as any);
@@ -46,6 +47,25 @@ export async function GET(request: NextRequest) {
     }
   } catch {
     companyId = null;
+  }
+
+  // Fallback: try to read companyId from JWT token in Authorization header
+  if (!companyId) {
+    const auth = request.headers.get('authorization') || '';
+    const token = auth.startsWith('Bearer ') ? auth.slice(7) : null;
+    if (token) {
+      try {
+        const payload: any = jwt.verify(token, process.env.JWT_SECRET || 'dev-secret-change-me');
+        if (payload?.companyId) companyId = Number(payload.companyId);
+      } catch {
+        // ignore invalid token
+      }
+    }
+  }
+
+  // If we still don't know the company, return an empty report to avoid leaking data
+  if (!companyId) {
+    return NextResponse.json({ results: [], totalsByCurrency: {}, grandUSD: { hours: 0, billable: 0, cost: 0 } });
   }
 
   // Build base where clause
