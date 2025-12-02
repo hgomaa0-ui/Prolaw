@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import prisma from '@/lib/prisma';
+import { prisma } from '@/lib/prisma';
 import { withCompany } from '@/lib/with-company';
 
 // GET /api/reports/banks?from=YYYY-MM-DD&to=YYYY-MM-DD
