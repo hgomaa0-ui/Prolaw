@@ -56,10 +56,13 @@ export async function GET(request: NextRequest) {
     ...(clientId ? { project: { clientId } } : {}),
   };
 
-  // Apply company scoping: project must belong to this company either directly or via its client
+  // Apply company scoping strictly:
+  // 1) المحامي نفسه من نفس الشركة (user.companyId)
+  // 2) والمشروع تابع لنفس الشركة مباشرة أو عن طريق العميل
   if (companyId) {
     where = {
       ...where,
+      user: { companyId },
       OR: [
         { project: { companyId } },
         { project: { client: { companyId } } },
