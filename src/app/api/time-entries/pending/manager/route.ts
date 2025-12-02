@@ -69,7 +69,10 @@ export async function GET(req: NextRequest) {
 export async function PUT(req: NextRequest) {
   const user = getUser(req);
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  if (!(user.role === 'OWNER' || user.role === 'MANAGER' || user.role === 'LAWYER_MANAGER'))
+  const role = String(user.role);
+  const isManagerLawyer = role === 'LAWYER_MANAGER' || role === 'LAWYER_PARTNER';
+  const allowed = ['OWNER','MANAGER','MANAGING_PARTNER'];
+  if (!allowed.includes(role) && !isManagerLawyer)
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   const idParam = req.nextUrl.searchParams.get('id');
   if (!idParam) return NextResponse.json({ error: 'Missing id' }, { status: 400 });
