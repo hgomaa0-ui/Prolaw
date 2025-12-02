@@ -5,10 +5,10 @@ import Link from "next/link";
 
 interface BankTxn {
   id: number;
-  createdAt: string;
+  date: string;
   amount: number;
   currency: string;
-  memo: string | null;
+  source: string;
 }
 interface BankItem {
   id: number;
@@ -40,11 +40,40 @@ export default function BankAccountsReport() {
 
   const loadTxns = async (bankId:number) => {
     const token = typeof window!=="undefined" ? localStorage.getItem('token'):null;
-    const url = new URL('/api/bank-transactions', window.location.origin);
-    url.searchParams.set('bankId', String(bankId));
-    const res = await fetch(url.toString(), { headers: token? { Authorization:`Bearer ${token}` }: {} });
-    const json = await res.json();
-    setTxnsByBank(prev => ({ ...prev, [bankId]: Array.isArray(json) ? json : [] }));
+    const headers = token ? { Authorization:`Bearer ${token}` } : {};
+
+    // fetch bank (with advancePayments + project) and bank transactions in parallel
+    const [bankRes, txRes] = await Promise.all([
+      fetch(`/api/banks/${bankId}`, { headers }),
+      fetch(`/api/bank-transactions?bankId=${bankId}`, { headers }),
+    ]);
+    const bank = bankRes.ok ? await bankRes.json() : null;
+    const txnsRaw = txRes.ok ? await txRes.json() : [];
+
+    const txnsArr = Array.isArray(txnsRaw) ? txnsRaw : [];
+    const advArr = Array.isArray(bank?.advancePayments) ? bank.advancePayments : [];
+
+    // combine and sort like bank detail page
+    const combined = [...txnsArr, ...advArr].sort((a:any,b:any)=>
+      new Date(b.createdAt ?? b.paidOn).getTime() - new Date(a.createdAt ?? a.paidOn).getTime()
+    ).map((item:any):BankTxn => {
+      const isAdv = !!item.project;
+      const date = item.paidOn ?? item.createdAt;
+      const amount = Number(item.amount);
+      const currency = item.currency;
+      const source = isAdv
+        ? (item.project?.name || 'Project advance')
+        : (item.memo || 'Manual');
+      return {
+        id: item.id,
+        date: new Date(date).toISOString(),
+        amount,
+        currency,
+        source,
+      };
+    });
+
+    setTxnsByBank(prev => ({ ...prev, [bankId]: combined }));
   };
 
   useEffect(() => { fetchData(); }, []); // initial
@@ -100,9 +129,9 @@ export default function BankAccountsReport() {
                       <tbody>
                         {(txnsByBank[item.id] || []).map(t=> (
                           <tr key={t.id}>
-                            <td className="border px-1 py-0.5">{new Date(t.createdAt).toLocaleDateString()}</td>
+                            <td className="border px-1 py-0.5">{new Date(t.date).toLocaleDateString()}</td>
                             <td className="border px-1 py-0.5 text-right">{Number(t.amount).toFixed(2)} {t.currency}</td>
-                            <td className="border px-1 py-0.5">{t.memo||'—'}</td>
+                            <td className="border px-1 py-0.5">{t.source}</td>
                           </tr>
                         ))}
                         {!((txnsByBank[item.id] || []).length) && (
