@@ -5,15 +5,16 @@ import Link from "next/link";
 
 interface BankTxn {
   id: number;
-  date: string;
+  createdAt: string;
   amount: number;
   currency: string;
   memo: string | null;
 }
 interface BankItem {
-  bank: { id: number; name: string; currency: string };
+  id: number;
+  name: string;
+  currency: string;
   balance: number;
-  transactions: BankTxn[];
 }
 
 export default function BankAccountsReport() {
@@ -23,20 +24,27 @@ export default function BankAccountsReport() {
   const [data, setData] = useState<BankItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [openId, setOpenId] = useState<number | null>(null);
+  const [txnsByBank, setTxnsByBank] = useState<Record<number, BankTxn[]>>({});
 
   const fetchData = async () => {
     setLoading(true);
     try {
-      const url = new URL("/api/reports/banks", window.location.origin);
-      url.searchParams.set("from", from);
-      url.searchParams.set("to", to);
       const token = typeof window!=="undefined" ? localStorage.getItem('token'):null;
-      const res = await fetch(url.toString(), { headers: token? { Authorization:`Bearer ${token}` }: {} });
+      const res = await fetch('/api/banks', { headers: token? { Authorization:`Bearer ${token}` }: {} });
       const json = await res.json();
-      setData(json);
+      setData(Array.isArray(json) ? json : []);
     } finally {
       setLoading(false);
     }
+  };
+
+  const loadTxns = async (bankId:number) => {
+    const token = typeof window!=="undefined" ? localStorage.getItem('token'):null;
+    const url = new URL('/api/bank-transactions', window.location.origin);
+    url.searchParams.set('bankId', String(bankId));
+    const res = await fetch(url.toString(), { headers: token? { Authorization:`Bearer ${token}` }: {} });
+    const json = await res.json();
+    setTxnsByBank(prev => ({ ...prev, [bankId]: Array.isArray(json) ? json : [] }));
   };
 
   useEffect(() => { fetchData(); }, []); // initial
@@ -70,11 +78,15 @@ export default function BankAccountsReport() {
           <tbody>
             {data.map(item => (
               <>
-              <tr key={item.bank.id} className="hover:bg-gray-50 cursor-pointer" onClick={()=>setOpenId(openId===item.bank.id?null:item.bank.id)}>
-                <td className="border px-2 py-1">{item.bank.name}</td>
-                <td className="border px-2 py-1 text-right">{item.balance.toFixed(2)} {item.bank.currency}</td>
+              <tr key={item.id} className="hover:bg-gray-50 cursor-pointer" onClick={()=>{
+                const nextId = openId===item.id?null:item.id;
+                setOpenId(nextId);
+                if(nextId){ loadTxns(nextId); }
+              }}>
+                <td className="border px-2 py-1">{item.name}</td>
+                <td className="border px-2 py-1 text-right">{item.balance.toFixed(2)} {item.currency}</td>
               </tr>
-              {openId===item.bank.id && (
+              {openId===item.id && (
                 <tr>
                   <td colSpan={2} className="p-0">
                     <table className="w-full text-xs">
@@ -86,14 +98,14 @@ export default function BankAccountsReport() {
                         </tr>
                       </thead>
                       <tbody>
-                        {item.transactions.map(t=> (
+                        {(txnsByBank[item.id] || []).map(t=> (
                           <tr key={t.id}>
-                            <td className="border px-1 py-0.5">{new Date(t.date).toLocaleDateString()}</td>
-                            <td className="border px-1 py-0.5 text-right">{t.amount.toFixed(2)} {t.currency}</td>
+                            <td className="border px-1 py-0.5">{new Date(t.createdAt).toLocaleDateString()}</td>
+                            <td className="border px-1 py-0.5 text-right">{Number(t.amount).toFixed(2)} {t.currency}</td>
                             <td className="border px-1 py-0.5">{t.memo||'—'}</td>
                           </tr>
                         ))}
-                        {!item.transactions.length && (
+                        {!((txnsByBank[item.id] || []).length) && (
                           <tr><td className="border px-1 py-1 text-center text-gray-500" colSpan={3}>No transactions</td></tr>
                         )}
                       </tbody>
