@@ -22,16 +22,19 @@ function getUser(req: NextRequest) {
 export async function GET(req: NextRequest) {
   const user = getUser(req);
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  if (!(user.role === 'OWNER' || user.role === 'MANAGER' || user.role === 'LAWYER_MANAGER'))
+  const role = String(user.role);
+  const isManagerLawyer = role === 'LAWYER_MANAGER' || role === 'LAWYER_PARTNER';
+  const allowed = ['OWNER','MANAGER','MANAGING_PARTNER'];
+  if (!allowed.includes(role) && !isManagerLawyer)
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   try {
     // scope by company
     const me = await prisma.user.findUnique({ where: { id: user.id }, select: { companyId: true } });
     const companyId = me?.companyId ?? 0;
 
-    // If role is LAWYER_MANAGER, only load entries for lawyers they manage
+    // If role is LAWYER_MANAGER or LAWYER_PARTNER, only load entries for lawyers they manage
     let userFilter: any = {};
-    if (user.role === 'LAWYER_MANAGER') {
+    if (isManagerLawyer) {
       const managed = await prisma.managerLawyer.findMany({
         where: { managerId: user.id },
         select: { lawyerId: true },
