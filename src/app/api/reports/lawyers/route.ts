@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { convert } from '@/lib/forex';
-import jwt from 'jsonwebtoken';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '@/lib/auth';
 
 /**
  * GET /api/reports/lawyers
@@ -36,17 +37,15 @@ export async function GET(request: NextRequest) {
   if (startParam) dateFilter.gte = new Date(startParam);
   if (endParam) dateFilter.lte = new Date(endParam);
 
-  // scope by company using JWT (if provided)
-  const auth = request.headers.get('authorization') || '';
-  const token = auth.startsWith('Bearer ') ? auth.slice(7) : null;
+  // scope by company using NextAuth session (no need for Authorization header)
   let companyId: number | null = null;
-  if (token) {
-    try {
-      const payload: any = jwt.verify(token, process.env.JWT_SECRET || 'dev-secret-change-me');
-      if (payload?.companyId) companyId = Number(payload.companyId);
-    } catch {
-      // ignore invalid token, treat as no company filter
+  try {
+    const session = await getServerSession(authOptions as any);
+    if (session?.user && (session.user as any).companyId) {
+      companyId = Number((session.user as any).companyId);
     }
+  } catch {
+    companyId = null;
   }
 
   // Fetch time entries with necessary relations in one go
