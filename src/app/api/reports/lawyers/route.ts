@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { convert } from '@/lib/forex';
+import jwt from 'jsonwebtoken';
 
 /**
  * GET /api/reports/lawyers
@@ -35,6 +36,19 @@ export async function GET(request: NextRequest) {
   if (startParam) dateFilter.gte = new Date(startParam);
   if (endParam) dateFilter.lte = new Date(endParam);
 
+  // scope by company using JWT (if provided)
+  const auth = request.headers.get('authorization') || '';
+  const token = auth.startsWith('Bearer ') ? auth.slice(7) : null;
+  let companyId: number | null = null;
+  if (token) {
+    try {
+      const payload: any = jwt.verify(token, process.env.JWT_SECRET || 'dev-secret-change-me');
+      if (payload?.companyId) companyId = Number(payload.companyId);
+    } catch {
+      // ignore invalid token, treat as no company filter
+    }
+  }
+
   // Fetch time entries with necessary relations in one go
   const timeEntries = await prisma.timeEntry.findMany({
     where: {
@@ -42,6 +56,7 @@ export async function GET(request: NextRequest) {
       ...(projectId ? { projectId } : {}),
       ...(userIdFilter ? { userId: userIdFilter } : {}),
       ...(clientId ? { project: { clientId } } : {}),
+      ...(companyId ? { project: { client: { companyId } } } : {}),
     },
     include: {
       user: { include: { position: true } },
