@@ -28,12 +28,17 @@ export default function LawyersReportPage() {
 
   async function load() {
     setLoading(true);
-        const params = new URLSearchParams();
+    const params = new URLSearchParams();
     if(projectId) params.set("projectId", projectId);
     if(lawyerId) params.set("userId", lawyerId);
     if (start) params.set("start", start);
     if (end) params.set("end", end);
-    const res = await fetch(`/api/reports/lawyers?${params.toString()}`);
+
+    const token = getAuth();
+    const headers: Record<string,string> = {};
+    if (token) headers["Authorization"] = `Bearer ${token}`;
+
+    const res = await fetch(`/api/reports/lawyers?${params.toString()}`, { headers });
     const json = await res.json();
     setData(json.results ?? []);
     setLoading(false);
