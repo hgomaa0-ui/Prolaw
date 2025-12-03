@@ -9,7 +9,14 @@ export const GET = withCompany(async (req: NextRequest, companyId?: number) => {
   const from = req.nextUrl.searchParams.get('from');
   const to = req.nextUrl.searchParams.get('to');
 
-  const where: any = { companyId };
+  // بعض السجلات القديمة ممكن يكون companyId فيها null لكن مربوطة بحساب بنك تابع للشركة
+  // لذلك نفلتر إما على companyId مباشرة أو على شركة البنك
+  const where: any = {
+    OR: [
+      { companyId },
+      { companyId: null, bank: { companyId } },
+    ],
+  };
   if (from) where.createdAt = { gte: new Date(from) };
   if (to) {
     where.createdAt = where.createdAt || {};
