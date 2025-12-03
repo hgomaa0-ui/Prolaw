@@ -9,27 +9,41 @@ export const GET = withCompany(async (req: NextRequest, companyId?: number) => {
   const from = req.nextUrl.searchParams.get('from');
   const to = req.nextUrl.searchParams.get('to');
 
-  // بعض السجلات القديمة ممكن يكون companyId فيها null لكن مربوطة بحساب بنك تابع للشركة
-  // لذلك نفلتر إما على companyId مباشرة أو على شركة البنك
-  const where: any = {
-    OR: [
-      { companyId },
-      { companyId: null, bank: { companyId } },
-    ],
-  };
-  if (from) where.createdAt = { gte: new Date(from) };
+  // فلترة بالتاريخ فقط لضمان ظهور كل الحركات حتى لو كان ال companyId قديم أو غير مضبوط
+  const expenseWhere: any = {};
+  if (from) expenseWhere.createdAt = { gte: new Date(from) };
   if (to) {
-    where.createdAt = where.createdAt || {};
-    (where.createdAt as any).lte = new Date(to);
+    expenseWhere.createdAt = expenseWhere.createdAt || {};
+    (expenseWhere.createdAt as any).lte = new Date(to);
   }
 
   const expenses = await prisma.officeExpense.findMany({
-    where,
+    where: expenseWhere,
     orderBy: { createdAt: 'asc' },
     include: { bank: true, project: { select: { name: true } } },
   });
 
-  const items = expenses.map((e) => ({
+  // جلب المرتبات من ال PayrollBatch/PayrollItem لنفس فترة التاريخ
+  const payrollWhere: any = {};
+  if (from) payrollWhere.createdAt = { gte: new Date(from) };
+  if (to) {
+    payrollWhere.createdAt = payrollWhere.createdAt || {};
+    (payrollWhere.createdAt as any).lte = new Date(to);
+  }
+
+  const batches = await prisma.payrollBatch.findMany({
+    where: payrollWhere,
+    orderBy: { createdAt: 'asc' },
+    include: {
+      items: {
+        include: {
+          employee: { select: { name: true } },
+        },
+      },
+    },
+  });
+
+  const officeItems = expenses.map((e) => ({
     id: e.id,
     date: e.createdAt,
     memo: e.notes,
@@ -40,6 +54,24 @@ export const GET = withCompany(async (req: NextRequest, companyId?: number) => {
     cashAmount: Number(e.amount),
     cashCurrency: e.currency,
   }));
+
+  const salaryItems = batches.flatMap((b) =>
+    b.items.map((it) => ({
+      id: it.id,
+      date: b.createdAt,
+      memo: it.employee?.name || 'Salary',
+      amount: Number(it.netSalary),
+      currency: 'USD',
+      expenseAccount: 'Salary',
+      cashAccount: '—',
+      cashAmount: Number(it.netSalary),
+      cashCurrency: 'USD',
+    }))
+  );
+
+  const items = [...officeItems, ...salaryItems].sort(
+    (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+  );
 
   return NextResponse.json(items);
 });
