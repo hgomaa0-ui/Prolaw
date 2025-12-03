@@ -30,6 +30,8 @@ export const GET = withCompany(async (req: NextRequest, companyId?: number) => {
     currency: e.currency,
     expenseAccount: e.project ? e.project.name : 'Office',
     cashAccount: e.bank?.name || '—',
+    cashAmount: Number(e.amount),
+    cashCurrency: e.currency,
   }));
 
   return NextResponse.json(items);
