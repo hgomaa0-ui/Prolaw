@@ -25,7 +25,14 @@ export const GET = withCompany(async (request: NextRequest, companyId?: number) 
       const clients = await prisma.client.findMany({
         where: { companyId },
         select: {
-          id:true,name:true,contactEmail:true,phone:true,address:true,notes:true,createdAt:true
+          id:true,
+          name:true,
+          contactEmail:true,
+          phone:true,
+          address:true,
+          notes:true,
+          createdAt:true,
+          code:true,
         }
       });
       return NextResponse.json(clients);
