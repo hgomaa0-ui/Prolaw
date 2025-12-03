@@ -3,8 +3,8 @@ import { prisma } from '@/lib/prisma';
 import { withCompany } from '@/lib/with-company';
 
 // GET /api/reports/office-expenses?from=YYYY-MM-DD&to=YYYY-MM-DD
-export const GET = withCompany(async (req: NextRequest, companyId?: number) => {
-  if (!companyId) return NextResponse.json([]);
+// نسمح للتقرير بالعمل حتى لو لم يتم تحديد companyId، بالاعتماد فقط على التاريخ
+export const GET = withCompany(async (req: NextRequest, _companyId?: number) => {
 
   const from = req.nextUrl.searchParams.get('from');
   const to = req.nextUrl.searchParams.get('to');
