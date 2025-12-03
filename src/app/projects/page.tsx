@@ -32,6 +32,8 @@ export default function ProjectsPage() {
   const [tempAmount, setTempAmount] = useState("");
   const [tempCurrency, setTempCurrency] = useState("USD");
   const [error, setError] = useState<string | null>(null);
+  const [filterCode, setFilterCode] = useState("");
+  const [filterName, setFilterName] = useState("");
 
   const router = useRouter();
 
@@ -116,6 +118,16 @@ export default function ProjectsPage() {
     fetchProjects();
   }, []);
 
+  const visibleProjects = projects.filter((p) => {
+    const codeMatch = filterCode
+      ? p.code.toLowerCase().includes(filterCode.toLowerCase())
+      : true;
+    const nameMatch = filterName
+      ? p.name.toLowerCase().includes(filterName.toLowerCase())
+      : true;
+    return codeMatch && nameMatch;
+  });
+
   return (
     <div className="container mx-auto p-6">
       <Toaster />
@@ -133,9 +145,32 @@ export default function ProjectsPage() {
         </button>
       </div>
 
-      {/* states */}
+      {/* filters + states */}
       {loading && <p>Loading…</p>}
       {error && <p className="text-red-600">{error}</p>}
+
+      {!loading && !error && (
+        <div className="mb-4 flex flex-wrap gap-4 items-end">
+          <div>
+            <label className="block text-xs font-medium mb-1">Filter by Code</label>
+            <input
+              value={filterCode}
+              onChange={(e) => setFilterCode(e.target.value)}
+              className="border rounded px-2 py-1 text-sm min-w-[140px]"
+              placeholder="e.g. P0001"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-medium mb-1">Filter by Name</label>
+            <input
+              value={filterName}
+              onChange={(e) => setFilterName(e.target.value)}
+              className="border rounded px-2 py-1 text-sm min-w-[200px]"
+              placeholder="Project name"
+            />
+          </div>
+        </div>
+      )}
 
       {/* table */}
       {!loading && !error && (
@@ -162,7 +197,7 @@ export default function ProjectsPage() {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {projects.map((p) => (
+                {visibleProjects.map((p) => (
                   <tr key={p.id}>
                     <td className="px-6 py-4">{p.client.name}</td>
                     <td className="px-6 py-4 font-mono text-sm">{p.code}</td>
