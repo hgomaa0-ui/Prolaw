@@ -22,6 +22,7 @@ export default function OfficeExpensesReport() {
   const [loading, setLoading] = useState(false);
   const [from, setFrom] = useState<string>(dayjs().startOf("year").format("YYYY-MM-DD"));
   const [to, setTo] = useState<string>(dayjs().format("YYYY-MM-DD"));
+  const [showSalaryDetails, setShowSalaryDetails] = useState(false);
 
   async function load() {
     setLoading(true);
@@ -36,6 +37,15 @@ export default function OfficeExpensesReport() {
   }, []);
 
   const totals = items.reduce((acc, it) => {
+    const key = it.currency;
+    acc[key] = (acc[key] || 0) + it.amount;
+    return acc;
+  }, {} as Record<string, number>);
+
+  const officeRows = items.filter((it) => it.expenseAccount !== "Salary");
+  const salaryRows = items.filter((it) => it.expenseAccount === "Salary");
+
+  const salaryTotals = salaryRows.reduce((acc, it) => {
     const key = it.currency;
     acc[key] = (acc[key] || 0) + it.amount;
     return acc;
@@ -72,8 +82,9 @@ export default function OfficeExpensesReport() {
               </tr>
             </thead>
             <tbody>
-              {items.map((it) => (
-                <tr key={it.id} className="border-t">
+              {/* Office expenses rows */}
+              {officeRows.map((it) => (
+                <tr key={`office-${it.id}`} className="border-t">
                   <td className="px-2 py-1">{dayjs(it.date).format("YYYY-MM-DD")}</td>
                   <td className="px-2 py-1">{it.expenseAccount}</td>
                   <td className="px-2 py-1 max-w-[300px] truncate">{it.memo ?? "-"}</td>
@@ -81,6 +92,33 @@ export default function OfficeExpensesReport() {
                   <td className="px-2 py-1 text-right">{it.cashAmount?.toFixed(2)} {it.cashCurrency}</td>
                 </tr>
               ))}
+
+              {/* Salary aggregated rows (one per currency) */}
+              {Object.entries(salaryTotals).map(([cur, amt]) => (
+                <tr
+                  key={`salary-summary-${cur}`}
+                  className="border-t bg-blue-900/40 cursor-pointer"
+                  onClick={() => setShowSalaryDetails((prev) => !prev)}
+                >
+                  <td className="px-2 py-1">-</td>
+                  <td className="px-2 py-1 font-semibold">Salary</td>
+                  <td className="px-2 py-1 max-w-[300px] truncate">Click to view salary details</td>
+                  <td className="px-2 py-1 text-right">{amt.toFixed(2)} {cur}</td>
+                  <td className="px-2 py-1 text-right">-</td>
+                </tr>
+              ))}
+
+              {/* Salary detail rows, shown only when expanded */}
+              {showSalaryDetails &&
+                salaryRows.map((it, idx) => (
+                  <tr key={`salary-detail-${idx}`} className="border-t bg-blue-900/20">
+                    <td className="px-2 py-1">{dayjs(it.date).format("YYYY-MM-DD")}</td>
+                    <td className="px-2 py-1">Salary</td>
+                    <td className="px-2 py-1 max-w-[300px] truncate">{it.memo ?? "-"}</td>
+                    <td className="px-2 py-1 text-right">{it.amount.toFixed(2)} {it.currency}</td>
+                    <td className="px-2 py-1 text-right">-</td>
+                  </tr>
+                ))}
             </tbody>
             <tfoot>
               {Object.entries(totals).map(([cur, amt]) => (
