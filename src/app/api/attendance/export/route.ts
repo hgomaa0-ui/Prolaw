@@ -16,12 +16,32 @@ export async function GET(req: NextRequest) {
         companyId = typeof cid === 'number' ? cid : Number(cid);
       }
     } catch {
-      // ignore, treat as no company scope
+      // invalid token – treat as no access to existing data
     }
   }
 
   const from = req.nextUrl.searchParams.get('from');
   const to = req.nextUrl.searchParams.get('to');
+
+  // لو ال companyId مش متوفر في التوكن، ما نصدرش أي بيانات من شركات تانية
+  if (!companyId) {
+    const emptyRows = [['EmployeeId','Employee', 'ClockIn', 'ClockOut']];
+    const emptyCsv = emptyRows.map((row) =>
+      row
+        .map((field) => {
+          const str = String(field ?? '');
+          return `"${str.replace(/"/g, '""')}"`;
+        })
+        .join(',')
+    ).join('\n');
+
+    return new NextResponse(emptyCsv, {
+      headers: {
+        'Content-Type': 'text/csv; charset=utf-8',
+        'Content-Disposition': 'attachment; filename="attendance.csv"',
+      },
+    });
+  }
 
   const where: any = {};
   if (from) where.clockIn = { gte: new Date(from) };
@@ -29,9 +49,7 @@ export async function GET(req: NextRequest) {
     where.clockIn = where.clockIn || {};
     (where.clockIn as any).lte = new Date(to);
   }
-  if (companyId) {
-    where.employee = { user: { companyId } };
-  }
+  where.employee = { user: { companyId } };
 
   const records = await prisma.attendance.findMany({
     where,
