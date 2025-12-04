@@ -4,7 +4,7 @@ import jwt from 'jsonwebtoken';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-change-me';
 
-type Decoded = { id:number; role:string; employeeId?:number };
+type Decoded = { id:number; role:string; employeeId?:number; companyId?:number };
 
 function decode(req: NextRequest): Decoded | null {
   const auth = req.headers.get('authorization') || '';
@@ -25,6 +25,7 @@ function isHR(role: string | null) {
 export async function GET(req: NextRequest) {
   const user = decode(req);
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const companyId = (user as any).companyId as number | undefined;
   const { searchParams } = new URL(req.url);
   const from = searchParams.get('from');
   const to = searchParams.get('to');
@@ -33,6 +34,10 @@ export async function GET(req: NextRequest) {
   if (from) filters.AND.push({ clockIn: { gte: new Date(from) } });
   if (to) filters.AND.push({ clockIn: { lte: new Date(to) } });
   if (empIdStr) filters.AND.push({ employeeId: Number(empIdStr) });
+  // scope by company when available
+  if (companyId) {
+    filters.AND.push({ employee: { user: { companyId } } });
+  }
   // employees can only see their own
   if (!isHR(user.role)) filters.AND.push({ employeeId: user.employeeId ?? 0 });
 

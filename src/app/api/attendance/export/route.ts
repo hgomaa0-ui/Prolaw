@@ -1,7 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import jwt from 'jsonwebtoken';
+
+const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-change-me';
 
 export async function GET(req: NextRequest) {
+  const auth = req.headers.get('authorization') || '';
+  const token = auth.startsWith('Bearer ') ? auth.slice(7) : null;
+  let companyId: number | undefined;
+  if (token) {
+    try {
+      const payload: any = jwt.verify(token, JWT_SECRET);
+      const cid = payload?.companyId;
+      if (cid !== undefined && cid !== null) {
+        companyId = typeof cid === 'number' ? cid : Number(cid);
+      }
+    } catch {
+      // ignore, treat as no company scope
+    }
+  }
+
   const from = req.nextUrl.searchParams.get('from');
   const to = req.nextUrl.searchParams.get('to');
 
@@ -11,8 +29,9 @@ export async function GET(req: NextRequest) {
     where.clockIn = where.clockIn || {};
     (where.clockIn as any).lte = new Date(to);
   }
-  // remove accidental companyId filter
-  if ('companyId' in where) delete (where as any).companyId;
+  if (companyId) {
+    where.employee = { user: { companyId } };
+  }
 
   const records = await prisma.attendance.findMany({
     where,

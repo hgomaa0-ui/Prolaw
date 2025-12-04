@@ -4,7 +4,7 @@ import jwt from 'jsonwebtoken';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-change-me';
 
-type Decoded = { id:number; role:string };
+type Decoded = { id:number; role:string; companyId?:number };
 function decode(req: NextRequest): Decoded | null {
   const auth = req.headers.get('authorization') || '';
   const token = auth.startsWith('Bearer ') ? auth.slice(7) : null;
@@ -15,7 +15,15 @@ function decode(req: NextRequest): Decoded | null {
     return null;
   }
 }
-function isHR(role:string|null){return role==='ADMIN'||role==='HR_MANAGER'}
+function isHR(role:string|null){
+  return (
+    role==='ADMIN' ||
+    role==='HR_MANAGER' ||
+    role==='OWNER' ||
+    role==='ADMIN_REPORTS' ||
+    role==='ACCOUNTANT_MASTER'
+  );
+}
 
 export async function GET(req: NextRequest){
   const user=decode(req);
@@ -27,6 +35,9 @@ export async function GET(req: NextRequest){
   const to=searchParams.get('to');
   const wh:any={};
   if(from||to){wh.clockIn={}; if(from) wh.clockIn.gte=new Date(from); if(to) wh.clockIn.lte=new Date(to);}  
+  if (user.companyId) {
+    wh.employee = { user: { companyId: user.companyId } };
+  }
 
   const records=await prisma.attendance.findMany({where:wh,include:{employee:{select:{name:true}}}});
 
