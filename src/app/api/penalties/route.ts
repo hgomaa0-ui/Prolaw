@@ -18,8 +18,9 @@ function getUser(req: NextRequest) {
 function isHR(role: string | null) {
   if(!role) return false;
   const r = role.toUpperCase();
-  if(r === 'ADMIN') return true;
-  return r === 'HR' || r.startsWith('HR_') || r === 'HRMANAGER' || r.startsWith('HR') || r==='OWNER';
+  if (r === 'ADMIN' || r === 'OWNER' || r === 'HR_MANAGER') return true;
+  if (r === 'ADMIN_REPORTS' || r === 'ACCOUNTANT_MASTER') return true;
+  return r === 'HR' || r.startsWith('HR_') || r === 'HRMANAGER' || r.startsWith('HR');
 }
 
 // ---------------------------------------------------------------------------
@@ -33,10 +34,18 @@ export async function GET(req: NextRequest) {
   const empIdParam = req.nextUrl.searchParams.get('employeeId');
   const where: any = {};
   if (empIdParam) where.employeeId = Number(empIdParam);
+
+  const companyId = (user as any).companyId as number | undefined;
+
   if (!isHR(user.role)) {
     // not HR: limit to their own employeeId
     if (!user.employeeId) return NextResponse.json([], { status: 200 });
     where.employeeId = user.employeeId;
+  } else {
+    // HR / admin – scope by companyId when available to avoid mixing offices
+    if (companyId) {
+      where.employee = { user: { companyId } };
+    }
   }
   const penalties = await prisma.penalty.findMany({
     where,
