@@ -112,7 +112,7 @@ export async function DELETE(req: NextRequest) {
     return NextResponse.json({ error: 'id required' }, { status: 400 });
   }
 
-  // نحاول حذف الباتش بشرط أن تظل في حالة DRAFT، حتى لو لم تُحذف أي سجلات نرجّع ok
-  await prisma.payrollBatch.deleteMany({ where: { id, status: 'DRAFT' } });
+  // نحاول حذف الباتش بشرط أن تكون مازالت مسودة (لم تُعتمد HR ولا Accountant)
+  await prisma.payrollBatch.deleteMany({ where: { id, hrApproved: false, accApproved: false } });
   return NextResponse.json({ ok: true });
 }
