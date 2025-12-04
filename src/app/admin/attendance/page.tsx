@@ -102,9 +102,29 @@ export default function AttendancePage() {
           Apply
         </button>
         <button
-          onClick={() => {
-            const q = `from=${filter.from}&to=${filter.to}`;
-            window.location.href = `/api/attendance/export?${q}`;
+          onClick={async () => {
+            try {
+              const q = `from=${filter.from}&to=${filter.to}`;
+              const res = await fetch(`/api/attendance/export?${q}` , {
+                headers: token ? { Authorization: `Bearer ${token}` } : {},
+              });
+              if (!res.ok) {
+                alert(await res.text());
+                return;
+              }
+              const blob = await res.blob();
+              const url = window.URL.createObjectURL(blob);
+              const a = document.createElement("a");
+              a.href = url;
+              a.download = "attendance.csv";
+              document.body.appendChild(a);
+              a.click();
+              a.remove();
+              window.URL.revokeObjectURL(url);
+            } catch (e) {
+              console.error(e);
+              alert("Failed to export CSV");
+            }
           }}
           className="rounded bg-blue-600 px-4 py-2 text-white"
         >
