@@ -24,6 +24,7 @@ interface Penalty {
 export default function PenaltiesPage() {
   const [penalties, setPenalties] = useState<Penalty[]>([]);
   const [employees, setEmployees] = useState<EmployeeOption[]>([]);
+  const [nameFilter, setNameFilter] = useState("");
 
   // add form
   const [employeeId, setEmployeeId] = useState<string>("");
@@ -42,6 +43,12 @@ export default function PenaltiesPage() {
     setPenalties(penJson);
     setEmployees(empJson.map((e: any) => ({ id: e.id, name: e.name })));
   }
+
+  const filteredPenalties = penalties.filter((p) =>
+    !nameFilter
+      ? true
+      : p.employee?.name?.toLowerCase().includes(nameFilter.toLowerCase())
+  );
 
   useEffect(() => {
     fetchData();
@@ -106,6 +113,15 @@ export default function PenaltiesPage() {
           <input value={reason} onChange={(e)=>setReason(e.target.value)} className="border rounded px-2 py-1 w-48" />
         </div>
         <button onClick={addPenalty} className="bg-blue-600 text-white px-4 py-2 rounded h-9">Add</button>
+        <div className="ml-auto">
+          <label className="block text-sm">Filter by name</label>
+          <input
+            value={nameFilter}
+            onChange={(e) => setNameFilter(e.target.value)}
+            className="border rounded px-2 py-1 w-48"
+            placeholder="Employee name"
+          />
+        </div>
       </div>
 
       {/* table */}
@@ -121,7 +137,7 @@ export default function PenaltiesPage() {
           </tr>
         </thead>
         <tbody>
-          {penalties.map(p=> (
+          {filteredPenalties.map(p=> (
             <tr key={p.id} className="border-t">
               <td className="px-4 py-2">{new Date(p.date).toLocaleDateString()}</td>
               <td className="px-4 py-2">

@@ -16,6 +16,7 @@ export default function AttendancePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState({ from: "", to: "" });
+  const [nameFilter, setNameFilter] = useState("");
   const [empOptions, setEmpOptions] = useState<{ id: number; name: string }[]>(
     []
   );
@@ -69,6 +70,12 @@ export default function AttendancePage() {
     return sum;
   }, 0);
 
+  const filteredRecords = records.filter((r) =>
+    !nameFilter
+      ? true
+      : r.employee.name.toLowerCase().includes(nameFilter.toLowerCase())
+  );
+
   /* -------------------------------- */
 
   return (
@@ -101,6 +108,16 @@ export default function AttendancePage() {
         >
           Apply
         </button>
+        <div>
+          <label className="block text-sm">Employee Name</label>
+          <input
+            type="text"
+            value={nameFilter}
+            onChange={(e) => setNameFilter(e.target.value)}
+            className="rounded border px-3 py-2"
+            placeholder="Filter by name"
+          />
+        </div>
         <button
           onClick={async () => {
             try {
@@ -252,7 +269,7 @@ export default function AttendancePage() {
           </tr>
         </thead>
         <tbody>
-          {records.map((r) => (
+          {filteredRecords.map((r) => (
             <tr key={r.id} className="hover:bg-gray-50">
               <td className="border px-4 py-2">{r.employee.name}</td>
               <td className="border px-4 py-2">
