@@ -97,3 +97,22 @@ export async function POST(req: NextRequest) {
 
   return NextResponse.json(batch, { status: 201 });
 }
+
+// DELETE /api/payroll/batches?id= - delete batch if still in DRAFT
+export async function DELETE(req: NextRequest) {
+  const auth = decode(req);
+  if (!auth) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const { searchParams } = new URL(req.url);
+  const idParam = searchParams.get('id');
+  const id = idParam ? Number(idParam) : NaN;
+  if (!id || isNaN(id)) {
+    return NextResponse.json({ error: 'id required' }, { status: 400 });
+  }
+
+  // نحاول حذف الباتش بشرط أن تظل في حالة DRAFT، حتى لو لم تُحذف أي سجلات نرجّع ok
+  await prisma.payrollBatch.deleteMany({ where: { id, status: 'DRAFT' } });
+  return NextResponse.json({ ok: true });
+}
