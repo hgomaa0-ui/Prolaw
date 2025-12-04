@@ -81,6 +81,25 @@ export default function PayrollPage() {
     fetchBatches(role);
   };
 
+  const deleteDraft = async (id: number) => {
+    if (!confirm('Delete this draft payroll batch?')) return;
+    try {
+      const res = await fetch(`/api/payroll/batches?id=${id}`, {
+        method: 'DELETE',
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      if (!res.ok) {
+        const text = await res.text();
+        alert(text || 'Failed to delete batch');
+        return;
+      }
+      await fetchBatches(role);
+    } catch (e) {
+      console.error(e);
+      alert('Failed to delete batch');
+    }
+  };
+
   return (
     <div className="p-6">
       <h1 className="text-2xl font-semibold mb-4">Payroll Batches</h1>
@@ -137,9 +156,17 @@ export default function PayrollPage() {
                 <td className="border px-2 py-1">{net.toFixed(2)}</td>
                 <td className="border px-2 py-1 space-x-2">
                   {!role?.startsWith('ACCOUNTANT') && b.status === "DRAFT" && (
-                    <button className="text-sm bg-green-600 text-white px-2 py-1 rounded" onClick={() => hrApprove(b.id)}>
-                      HR Approve
-                    </button>
+                    <>
+                      <button className="text-sm bg-green-600 text-white px-2 py-1 rounded" onClick={() => hrApprove(b.id)}>
+                        HR Approve
+                      </button>
+                      <button
+                        className="text-sm bg-red-600 text-white px-2 py-1 rounded ml-2"
+                        onClick={() => deleteDraft(b.id)}
+                      >
+                        Reject
+                      </button>
+                    </>
                   )}
                   {role?.startsWith('ACCOUNTANT') && b.status === "HR_APPROVED" && (
                     <button className="text-sm bg-purple-600 text-white px-2 py-1 rounded" onClick={() => accApprove(b.id)}>
