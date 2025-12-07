@@ -35,8 +35,14 @@ function getUserId(req: NextRequest): number | null {
 }
 
 function isHR(role: string | null) {
-  // ADMIN_REPORTS is NOT HR; restrict to own leaves
-  return role === 'ADMIN' || role === 'HR_MANAGER' || role==='OWNER';
+  // treat core admin and HR-like roles as HR for this endpoint
+  return (
+    role === 'ADMIN' ||
+    role === 'HR_MANAGER' ||
+    role === 'OWNER' ||
+    role === 'ADMIN_REPORTS' ||
+    role === 'ACCOUNTANT_MASTER'
+  );
 }
 
 export async function GET(req: NextRequest) {
@@ -55,13 +61,16 @@ export async function GET(req: NextRequest) {
     ],
   };
   if (!isHR(role)) {
-    if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    // normal user – show only own leaves if we can resolve employee record; otherwise return empty list
+    if (!userId) return NextResponse.json([]);
     const emp = await prisma.employee.findFirst({ where: { userId } });
     if (!emp) return NextResponse.json([]);
     whereClause.AND.push({ employeeId: emp.id });
   } else {
-    if (!companyId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    whereClause.AND.push({ employee: { user: { companyId } } });
+    // HR / admin – if companyId is available, scope by it; otherwise show all
+    if (companyId) {
+      whereClause.AND.push({ employee: { user: { companyId } } });
+    }
   }
 
   const leaves = await prisma.leaveRequest.findMany({

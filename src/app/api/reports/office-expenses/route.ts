@@ -23,7 +23,7 @@ export const GET = withCompany(async (req: NextRequest, _companyId?: number) => 
     include: { bank: true, project: { select: { name: true } } },
   });
 
-  // جلب المرتبات من ال PayrollBatch/PayrollItem لنفس فترة التاريخ
+  // جلب المرتبات من ال PayrollBatch/PayrollItem لنفس فترة التاريخ (لو الموديل موجود)
   const payrollWhere: any = {};
   if (from) payrollWhere.createdAt = { gte: new Date(from) };
   if (to) {
@@ -31,17 +31,23 @@ export const GET = withCompany(async (req: NextRequest, _companyId?: number) => 
     (payrollWhere.createdAt as any).lte = new Date(to);
   }
 
-  const batches = await prisma.payrollBatch.findMany({
-    where: payrollWhere,
-    orderBy: { createdAt: 'asc' },
-    include: {
-      items: {
-        include: {
-          employee: { select: { name: true } },
+  let batches: any[] = [];
+  try {
+    batches = await prisma.payrollBatch.findMany({
+      where: payrollWhere,
+      orderBy: { createdAt: 'asc' },
+      include: {
+        items: {
+          include: {
+            employee: { select: { name: true } },
+          },
         },
       },
-    },
-  });
+    });
+  } catch (err) {
+    console.error('Payroll not included in office-expenses report:', err);
+    batches = [];
+  }
 
   const officeItems = expenses.map((e) => ({
     id: e.id,

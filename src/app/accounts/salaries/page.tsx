@@ -56,14 +56,34 @@ export default function SalariesApprovePage() {
 
       {Array.isArray(runs) && runs.length > 0 ? (
         <table className="text-sm border min-w-full mt-4">
-          <thead className="bg-gray-100"><tr><th className="border px-3 py-1">Period</th><th className="border px-3 py-1 text-right">Payslips</th><th className="border px-3 py-1 text-right">Total</th><th className="border px-3 py-1"></th></tr></thead>
+          <thead className="bg-gray-100"><tr><th className="border px-3 py-1">Period</th><th className="border px-3 py-1 text-right">Payslips</th><th className="border px-3 py-1 text-right">Total</th><th className="border px-3 py-1 text-center">Actions</th></tr></thead>
           <tbody>
             {runs.map((r:any)=>(
               <tr key={r.id} className="hover:bg-gray-50">
                 <td className="border px-3 py-1">{r.period}</td>
                 <td className="border px-3 py-1 text-right">{r.payslipCount}</td>
                 <td className="border px-3 py-1 text-right">{r.total.toFixed(2)}</td>
-                <td className="border px-3 py-1 text-center"><button className="text-blue-600 underline" onClick={()=>{setSelectedRun(r);setBankId('');}}>Approve</button></td>
+                <td className="border px-3 py-1 text-center space-x-3">
+                  <button className="text-blue-600 underline" onClick={()=>{setSelectedRun(r);setBankId('');}}>Approve</button>
+                  <button
+                    className="text-red-600 underline"
+                    onClick={async () => {
+                      if (!confirm('Reject and delete this salary batch?')) return;
+                      const res = await fetch(`/api/payroll/batches?id=${r.id}`, {
+                        method: 'DELETE',
+                        headers: token ? { Authorization: `Bearer ${token}` } : {},
+                      });
+                      if (!res.ok) {
+                        const txt = await res.text().catch(() => '');
+                        alert(txt || 'Failed to reject batch');
+                        return;
+                      }
+                      mutate('/api/salaries/pending');
+                    }}
+                  >
+                    Reject
+                  </button>
+                </td>
               </tr>
             ))}
           </tbody>
