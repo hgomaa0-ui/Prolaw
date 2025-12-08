@@ -112,7 +112,19 @@ export async function DELETE(req: NextRequest) {
     return NextResponse.json({ error: 'id required' }, { status: 400 });
   }
 
-  // نحذف الباتش مباشرة بالـ id فقط؛ لو الباتش مش موجود لن يحدث شيء لكن نرجّع ok
-  await prisma.payrollBatch.deleteMany({ where: { id } });
-  return NextResponse.json({ ok: true });
+  try {
+    // لازم نمسح العناصر المرتبطة الأول لتجنب Foreign key constraint
+    await prisma.$transaction([
+      prisma.payrollItem.deleteMany({ where: { batchId: id } }),
+      prisma.payrollBatch.deleteMany({ where: { id } }),
+    ]);
+    return NextResponse.json({ ok: true });
+  } catch (err: any) {
+    console.error('Failed to delete payroll batch', err);
+    // نرجّع رسالة نصية مفهومة للـ Frontend
+    const message = err?.code === 'P2003'
+      ? 'Cannot delete batch because of related payroll items (P2003).'
+      : 'Failed to delete payroll batch.';
+    return new NextResponse(message, { status: 500 });
+  }
 }
