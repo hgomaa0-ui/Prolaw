@@ -3,10 +3,12 @@ generator client {
 }
 
 datasource db {
-  provider          = "postgresql"
-  url               = env("PRISMA_DATABASE_URL")
-  directUrl         = env("POSTGRES_URL")
-  shadowDatabaseUrl = env("SHADOW_DB_URL")
+  provider  = "postgresql"
+  url       = env("PRISMA_DATABASE_URL")
+  directUrl = env("POSTGRES_URL")
+  // Temporarily disable shadow database locally to avoid
+  // "shadow database appears to be the same as the main database" error
+  // shadowDatabaseUrl = env("SHADOW_DB_URL")
 }
 
 model Company {
