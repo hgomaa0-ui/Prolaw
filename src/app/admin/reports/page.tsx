@@ -25,6 +25,12 @@ export default function AdminReportsPage() {
       key: "bank-accounts"
     },
     {
+      href: "/admin/reports/salaries",
+      title: "Salary Report",
+      description: "View all office salaries by employee and period.",
+      key: "salaries"
+    },
+    {
       href: "/admin/reports/office-expenses",
       title: "Office Expenses",
       description: "All office expense transactions and totals.",
