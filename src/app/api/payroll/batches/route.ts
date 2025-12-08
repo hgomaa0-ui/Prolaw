@@ -112,15 +112,7 @@ export async function DELETE(req: NextRequest) {
     return NextResponse.json({ error: 'id required' }, { status: 400 });
   }
 
-  // لو الدور محاسب: يسمح بحذف DRAFT أو HR_APPROVED قبل اعتمادها محاسبيًا نهائيًا
-  const role = (auth as any).role as string | undefined;
-  if (role && role.toUpperCase().startsWith('ACCOUNTANT')) {
-    await prisma.payrollBatch.deleteMany({
-      where: { id, status: { in: ['DRAFT', 'HR_APPROVED'] } as any },
-    });
-  } else {
-    // باقي الأدوار: مسموح فقط بحذف DRAFT
-    await prisma.payrollBatch.deleteMany({ where: { id, status: 'DRAFT' as any } });
-  }
+  // نحذف الباتش مباشرة بالـ id فقط؛ لو الباتش مش موجود لن يحدث شيء لكن نرجّع ok
+  await prisma.payrollBatch.deleteMany({ where: { id } });
   return NextResponse.json({ ok: true });
 }
